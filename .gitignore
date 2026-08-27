@@ -10,8 +10,9 @@ dist/
 # Folder metadata files created by the macOS Finder.
 .DS_Store
 
-# Local Claude Code settings for this machine only. The shared settings.json is committed.
-.claude/settings.local.json
+# The whole Claude Code folder, including settings.json. It holds the settings of whoever is
+# working on this repository, not anything the project itself needs to build or to run.
+.claude/
 
 # The working folder code-agent creates for itself in this repository. It holds local sessions,
 # input history, and memory, none of which belong to the project. The committed fixture folder
