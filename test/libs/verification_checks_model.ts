@@ -274,7 +274,7 @@ export class VerificationChecksModel {
 
 			const capabilityResult = VerificationHelpers.pendingWhenCapabilityMissing(
 				outcome,
-				(capabilities) => capabilities.toolNames.includes('secret-keeper') === true,
+				(capabilities) => capabilities.toolNames.includes('secret_keeper') === true,
 				'the secret-keeper subagent tool',
 			);
 			if (capabilityResult !== null) {
@@ -289,6 +289,50 @@ export class VerificationChecksModel {
 			}
 
 			return VerificationResults.passed('the secret-keeper subagent ran and its answer reached the user');
+		} finally {
+			DoublureRunner.removeFolder(folderPath);
+		}
+	}
+
+	/**
+	 * Asks how to greet someone, which only the fixture skill can answer.
+	 *
+	 * The exact phrase lives only inside `SKILL.md`, so it can only reach the answer if the agent called
+	 * `load_skill` and then followed what it read.
+	 *
+	 * @returns Whether the greeting from the skill came back.
+	 */
+	static async checkSkillLoaded(): Promise<VerificationResult> {
+		const folderPath = DoublureRunner.makeFixtureFolder();
+
+		try {
+			const outcome = await DoublureRunner.run({
+				workingDirectoryPath: folderPath,
+				commandLineArguments: ['--print', 'How should I greet someone in this project? Use the project greeting.'],
+			});
+
+			const pendingResult = VerificationHelpers.pendingWhenNotReady(outcome, 'the --print option');
+			if (pendingResult !== null) {
+				return pendingResult;
+			}
+
+			const capabilityResult = VerificationHelpers.pendingWhenCapabilityMissing(
+				outcome,
+				(capabilities) => capabilities.toolNames.includes('load_skill') === true,
+				'the load_skill tool',
+			);
+			if (capabilityResult !== null) {
+				return capabilityResult;
+			}
+
+			if (outcome.standardOutput.includes('Salutations, friend') === false) {
+				return VerificationResults.failed(
+					'the greeting from the skill did not come back, so load_skill did not run or was not followed',
+					VerificationHelpers.describeOutcome(outcome),
+				);
+			}
+
+			return VerificationResults.passed('load_skill ran and the instructions of the skill were followed');
 		} finally {
 			DoublureRunner.removeFolder(folderPath);
 		}

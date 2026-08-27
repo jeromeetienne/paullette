@@ -102,6 +102,13 @@ export class VerificationSteps {
 				run: VerificationChecksModel.checkSubagentCalled,
 			},
 			{
+				name: 'skillLoaded',
+				title: 'A question only the fixture skill can answer is answered',
+				planStepNumber: 9,
+				isModelNeeded: true,
+				run: VerificationChecksModel.checkSkillLoaded,
+			},
+			{
 				name: 'sessionSaved',
 				title: 'The conversation is written to .doublure/sessions',
 				planStepNumber: 10,

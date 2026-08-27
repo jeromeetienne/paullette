@@ -59,11 +59,11 @@ The goal is the smallest thing that proves the whole chain works: command line t
 
 ## Milestone 3 — the `.doublure` folder
 
-- [ ] `doublure_folder_locator.ts` — finds the project root, creates `.doublure` when absent → verification step `folderCreated`
-- [ ] `instruction_loader.ts`, `agent_definition_loader.ts`, `command_definition_loader.ts`, `skill_definition_loader.ts`, `doublure_folder_reader.ts`
-- [ ] The `--list` option, printing what was loaded as JSON → verification step `fixtureLoaded`
-- [ ] `src/libs/tools/skill_tools.ts` — the `load_skill` tool
-- [ ] `src/libs/tools/subagent_tools.ts` — one tool per subagent, through `Agent.asTool()` → verification step `subagentCalled`
+- [x] `doublure_folder_locator.ts` — finds the project root, creates `.doublure` when absent → verification step `folderCreated`
+- [x] `instruction_loader.ts`, `agent_definition_loader.ts`, `command_definition_loader.ts`, `skill_definition_loader.ts`, `doublure_folder_reader.ts`
+- [x] The `--list` option, printing what was loaded as JSON → verification step `fixtureLoaded`
+- [x] `src/libs/tools/skill_tools.ts` — the `load_skill` tool → verification step `skillLoaded`
+- [x] `src/libs/tools/subagent_tools.ts` — one tool per subagent, through `Agent.asTool()` → verification step `subagentCalled`
 
 ## Milestone 4 — memory
 
