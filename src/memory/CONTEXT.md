@@ -1,4 +1,4 @@
-# Directory Context: `/src/libs/memory`
+# Directory Context: `/src/memory`
 
 ## Purpose
 Reads and writes `.doublure/memory`, which is where doublure keeps what it was asked to remember between sessions.

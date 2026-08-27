@@ -1,4 +1,4 @@
-# Directory Context: `/src/libs/tools`
+# Directory Context: `/src/tools`
 
 ## Purpose
 Holds every tool the agent can call: reading and changing files, searching, and running shell commands.

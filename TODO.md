@@ -42,44 +42,44 @@ The verification runner reads that line to tell a part that is not built yet fro
 
 The goal is the smallest thing that proves the whole chain works: command line to model to answer.
 
-- [x] Move `src/libs/claude_folder/` to `src/libs/doublure_folder/`, renaming `claude_folder_types.ts` to `doublure_folder_types.ts`
-- [x] `src/libs/agent/model_provider.ts` — the three OpenAI Agents SDK calls from the plan
-- [x] `src/libs/agent/system_prompt_builder.ts` — a system prompt with no `.doublure` content yet
-- [x] `src/libs/agent/agent_builder.ts` — an agent with no tools yet
+- [x] Move `src/claude_folder/` to `src/doublure_folder/`, renaming `claude_folder_types.ts` to `doublure_folder_types.ts`
+- [x] `src/agent/model_provider.ts` — the three OpenAI Agents SDK calls from the plan
+- [x] `src/agent/system_prompt_builder.ts` — a system prompt with no `.doublure` content yet
+- [x] `src/agent/agent_builder.ts` — an agent with no tools yet
 - [x] `src/cli.ts` — Commander.js option parsing and the `--print` one-shot mode → verification step `typecheck`, `endpoint`, `oneShotAnswer`
 
 ## Milestone 2 — the tools and the permission prompt
 
-- [x] `src/libs/tools/tool_types.ts` — `ToolContext` and the `PermissionAsker` interface
-- [x] `src/libs/tools/file_tools.ts` — `read_file`, `write_file`, `edit_file`, `list_directory`
-- [x] `src/libs/tools/search_tools.ts` — `glob_files`, `grep_files`
-- [x] `src/libs/tools/shell_tools.ts` — `run_shell_command`, with a timeout and an output cap
-- [x] `src/libs/tools/tool_registry.ts` — assembles and filters the tool list
-- [x] `src/libs/cli/permission_prompt.ts` — refuses by default when there is no terminal → verification step `toolCallRead`, `permissionRefused`, `permissionAllowed`
+- [x] `src/tools/tool_types.ts` — `ToolContext` and the `PermissionAsker` interface
+- [x] `src/tools/file_tools.ts` — `read_file`, `write_file`, `edit_file`, `list_directory`
+- [x] `src/tools/search_tools.ts` — `glob_files`, `grep_files`
+- [x] `src/tools/shell_tools.ts` — `run_shell_command`, with a timeout and an output cap
+- [x] `src/tools/tool_registry.ts` — assembles and filters the tool list
+- [x] `src/cli/permission_prompt.ts` — refuses by default when there is no terminal → verification step `toolCallRead`, `permissionRefused`, `permissionAllowed`
 
 ## Milestone 3 — the `.doublure` folder
 
 - [x] `doublure_folder_locator.ts` — finds the project root, creates `.doublure` when absent → verification step `folderCreated`
 - [x] `instruction_loader.ts`, `agent_definition_loader.ts`, `command_definition_loader.ts`, `skill_definition_loader.ts`, `doublure_folder_reader.ts`
 - [x] The `--list` option, printing what was loaded as JSON → verification step `fixtureLoaded`
-- [x] `src/libs/tools/skill_tools.ts` — the `load_skill` tool → verification step `skillLoaded`
-- [x] `src/libs/tools/subagent_tools.ts` — one tool per subagent, through `Agent.asTool()` → verification step `subagentCalled`
+- [x] `src/tools/skill_tools.ts` — the `load_skill` tool → verification step `skillLoaded`
+- [x] `src/tools/subagent_tools.ts` — one tool per subagent, through `Agent.asTool()` → verification step `subagentCalled`
 
 ## Milestone 4 — memory
 
-- [x] `src/libs/memory/memory_types.ts` and `memory_store.ts`
-- [x] `src/libs/tools/memory_tools.ts` — `memory_list`, `memory_read`, `memory_write`, `memory_delete`
+- [x] `src/memory/memory_types.ts` and `memory_store.ts`
+- [x] `src/tools/memory_tools.ts` — `memory_list`, `memory_read`, `memory_write`, `memory_delete`
 - [x] The `MEMORY.md` index in the system prompt → verification step `memoryWritten`
 
 ## Milestone 5 — history on disk
 
-- [x] `src/libs/history/history_types.ts` and `session_store.ts` → verification step `sessionSaved`, `sessionResumed`
-- [x] `src/libs/history/input_history_store.ts`
+- [x] `src/history/history_types.ts` and `session_store.ts` → verification step `sessionSaved`, `sessionResumed`
+- [x] `src/history/input_history_store.ts`
 
 ## Milestone 6 — the interactive command line interface
 
-- [ ] `src/libs/cli/conversation_session.ts`, `output_renderer.ts`, `readline_interface.ts` — **written, but no verification step exercises it.** Driving the interactive loop needs a pseudo terminal, because `_runInteractive` refuses when the input is not a terminal.
-- [ ] `src/libs/cli/slash_command_handler.ts` — `/help` and `/exit` first, then `/clear`, `/agents`, `/skills`, `/memory` — **written, but only the file commands are verified, through `--expand`.** No step types `/help` or `/exit` at a terminal.
+- [ ] `src/cli/conversation_session.ts`, `output_renderer.ts`, `readline_interface.ts` — **written, but no verification step exercises it.** Driving the interactive loop needs a pseudo terminal, because `_runInteractive` refuses when the input is not a terminal.
+- [ ] `src/cli/slash_command_handler.ts` — `/help` and `/exit` first, then `/clear`, `/agents`, `/skills`, `/memory` — **written, but only the file commands are verified, through `--expand`.** No step types `/help` or `/exit` at a terminal.
 - [x] The `--expand` option, printing an expanded slash command without calling the model → verification step `commandExpanded`
 - [ ] Quitting on the interrupt key pressed twice and on the input stream closing, both saving the session first. Moved here from Milestone 5: a second press of the interrupt key only means anything once there is a loop to interrupt. The one-shot mode already handles a single press, and the conversation is written to disk before the model is called, so nothing is lost whenever doublure is stopped. — **written, but not verified.** Needs the same pseudo terminal as the loop itself.
 

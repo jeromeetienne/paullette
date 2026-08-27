@@ -1,4 +1,4 @@
-# Directory Context: `/src/libs/doublure_folder`
+# Directory Context: `/src/doublure_folder`
 
 ## Purpose
 Finds the one `.doublure` folder at the project root, makes it when it is absent, and reads the instruction document, the subagents, the slash commands, and the skills out of it.

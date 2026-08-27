@@ -4,26 +4,26 @@ import Path from 'node:path';
 import { type Agent } from '@openai/agents';
 import { Command } from 'commander';
 
-import { AgentBuilder } from './libs/agent/agent_builder.ts';
-import { ModelProvider } from './libs/agent/model_provider.ts';
-import { SystemPromptBuilder } from './libs/agent/system_prompt_builder.ts';
-import { ConversationSession } from './libs/cli/conversation_session.ts';
-import { OutputRenderer } from './libs/cli/output_renderer.ts';
-import { PermissionPrompt } from './libs/cli/permission_prompt.ts';
-import { ReadlineInterface } from './libs/cli/readline_interface.ts';
-import { SlashCommandHandler } from './libs/cli/slash_command_handler.ts';
-import { ConfigLoader } from './libs/config/config_loader.ts';
-import { type DoublureConfig } from './libs/config/config_types.ts';
-import { DoublureFolderReader } from './libs/doublure_folder/doublure_folder_reader.ts';
-import { type DoublureFolderContent } from './libs/doublure_folder/doublure_folder_types.ts';
-import { InputHistoryStore } from './libs/history/input_history_store.ts';
-import { SessionStore } from './libs/history/session_store.ts';
-import { MemoryStore } from './libs/memory/memory_store.ts';
-import { MemoryTools } from './libs/tools/memory_tools.ts';
-import { SkillTools } from './libs/tools/skill_tools.ts';
-import { SubagentTools } from './libs/tools/subagent_tools.ts';
-import { ToolRegistry, type BuiltTool } from './libs/tools/tool_registry.ts';
-import { type ToolContext } from './libs/tools/tool_types.ts';
+import { AgentBuilder } from './agent/agent_builder.ts';
+import { ModelProvider } from './agent/model_provider.ts';
+import { SystemPromptBuilder } from './agent/system_prompt_builder.ts';
+import { ConversationSession } from './cli/conversation_session.ts';
+import { OutputRenderer } from './cli/output_renderer.ts';
+import { PermissionPrompt } from './cli/permission_prompt.ts';
+import { ReadlineInterface } from './cli/readline_interface.ts';
+import { SlashCommandHandler } from './cli/slash_command_handler.ts';
+import { ConfigLoader } from './config/config_loader.ts';
+import { type DoublureConfig } from './config/config_types.ts';
+import { DoublureFolderReader } from './doublure_folder/doublure_folder_reader.ts';
+import { type DoublureFolderContent } from './doublure_folder/doublure_folder_types.ts';
+import { InputHistoryStore } from './history/input_history_store.ts';
+import { SessionStore } from './history/session_store.ts';
+import { MemoryStore } from './memory/memory_store.ts';
+import { MemoryTools } from './tools/memory_tools.ts';
+import { SkillTools } from './tools/skill_tools.ts';
+import { SubagentTools } from './tools/subagent_tools.ts';
+import { ToolRegistry, type BuiltTool } from './tools/tool_registry.ts';
+import { type ToolContext } from './tools/tool_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

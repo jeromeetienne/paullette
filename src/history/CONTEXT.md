@@ -1,4 +1,4 @@
-# Directory Context: `/src/libs/history`
+# Directory Context: `/src/history`
 
 ## Purpose
 Keeps two different things on disk: the conversation itself, in `.doublure/sessions`, and the lines the user typed, in `.doublure/input_history.txt`.

@@ -1,4 +1,4 @@
-# Directory Context: `/src/libs/agent`
+# Directory Context: `/src/agent`
 
 ## Purpose
 Turns the configuration and whatever was read out of the `.doublure` folder into an agent the OpenAI Agents SDK can run.
