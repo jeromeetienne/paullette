@@ -94,7 +94,7 @@ The goal is the smallest thing that proves the whole chain works: command line t
 
 There are two suites, and they cover different failures.
 
-`npm run test:unit` is the unit test suite under `test/unit`. It calls the code in `src/` directly, never calls a model, and runs in seconds. It covers the pieces one at a time at their edges: a path that climbs out of the working folder, frontmatter that is not valid YAML, a permission that was refused, a memory index that has to be rewritten. It cannot say whether the whole chain works, because nothing in it starts paullette or calls a model.
+`npm run test:unit` is the unit test suite, which lives inside each package: `packages/paullette-core/test/unit` and `packages/paullette-cli/test/unit`. It calls the code of its own package directly, never calls a model, and runs in seconds. It covers the pieces one at a time at their edges: a path that climbs out of the working folder, frontmatter that is not valid YAML, a permission that was refused, a memory index that has to be rewritten. It cannot say whether the whole chain works, because nothing in it starts paullette or calls a model.
 
 `npm run verify` exits zero: all fourteen steps pass. That covers the one-shot mode end to end — the `.paullette` folder, the tools, the permission prompt, the memory, the subagents, the skills, the slash command expansion, and the conversation history.
 

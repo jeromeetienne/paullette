@@ -123,6 +123,8 @@ export type ListOutput = {
 	commands: Array<{ name: string; description: string; argumentHint: string | null }>;
 	/** Every skill read from `.paullette/skills`. */
 	skills: Array<{ name: string; description: string }>;
+	/** Every Model Context Protocol server that started. */
+	modelContextProtocolServers: Array<{ name: string }>;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -142,7 +144,7 @@ export type ListOutput = {
 export const CAPABILITY_LINE_PREFIX = 'paullette-capabilities:';
 
 /**
- * What paullette says it can currently do. Written by `src/cli.ts` and read by `PaulletteRunner`. The two sides
+ * What paullette says it can currently do. Written by `packages/paullette-cli/src/cli.ts` and read by `PaulletteRunner`. The two sides
  * are kept in step by hand, because nothing under `test/` may import from `src/`.
  */
 export type PaulletteCapabilities = {
@@ -152,6 +154,8 @@ export type PaulletteCapabilities = {
 	hasMemory: boolean;
 	/** True once paullette saves the conversation to `.paullette/sessions`. */
 	hasSessions: boolean;
+	/** The names of the Model Context Protocol servers that started, which is empty when none was declared. */
+	modelContextProtocolServerNames: string[];
 };
 
 ///////////////////////////////////////////////////////////////////////////////

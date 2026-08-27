@@ -139,14 +139,32 @@ npm start
 ```
 
 - `npm start` — run from the TypeScript source through `tsx`
-- `npm run build` — compile to `dist`
-- `npm run typecheck` — check the types without emitting anything
-- `npm run test:unit` — run the unit tests
+- `npm run build` — compile every package to its own `dist`
+- `npm run typecheck` — check the types of every package without emitting anything
+- `npm run test:unit` — run the unit tests of every package
 - `npm run verify` — run the full verification suite against a live endpoint
 - `npm run verify:fast` — run only the steps that do not need the model to answer
 - `npm test` — run the unit tests and then the full verification suite
 
 The verification suite needs an endpoint to be serving at the address paullette is configured with. `npm run lmstudio:start` starts the LM Studio local server, and `npm run lmstudio:status` says whether it is running.
+
+### How the repository is laid out
+
+The repository is an npm workspace holding one package per part of paullette.
+
+```
+packages/
+	paullette-core/    the agent, the configuration, the .paullette folder reader,
+	                   the history, the memory, and the tools. Published as paullette-core.
+	paullette-cli/     the terminal interface and the command line entry point.
+	                   Published as paullette, and this is what npx paullette runs.
+test/                  the verification runner, which starts paullette as a separate
+	                   process. The unit tests live inside each package instead.
+```
+
+`paullette` imports `paullette-core` by name, for example `import { ToolRegistry } from 'paullette-core/tools/tool_registry';`. Nothing imports across a package folder by a relative path, and `paullette-core` never imports from `paullette`. That is what will let a web interface sit on the same agent as the terminal interface.
+
+Both packages carry the same version number and are published together by `npm run publish:all`.
 
 ## Licence
 

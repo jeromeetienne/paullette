@@ -27,7 +27,7 @@ const REPOSITORY_ROOT_PATH = Path.resolve(__dirname, '..', '..');
 /**
  * The absolute path of the command line entry point of paullette.
  */
-const MAIN_FILE_PATH = Path.join(REPOSITORY_ROOT_PATH, 'src', 'cli.ts');
+const MAIN_FILE_PATH = Path.join(REPOSITORY_ROOT_PATH, 'packages', 'paullette-cli', 'src', 'cli.ts');
 
 /**
  * The absolute path of the fixture folder that every verification step starts from.
@@ -38,7 +38,7 @@ const FIXTURE_FOLDER_PATH = Path.join(REPOSITORY_ROOT_PATH, 'test', 'fixture');
  * What one run of paullette produced.
  */
 export type RunOutcome = {
-	/** False when `src/cli.ts` does not exist yet, which means the step that asked for the run cannot run. */
+	/** False when `packages/paullette-cli/src/cli.ts` does not exist yet, which means the step that asked for the run cannot run. */
 	isBuilt: boolean;
 	/** The status paullette exited with, or null when it was stopped by the timeout. */
 	exitCode: number | null;
@@ -100,7 +100,7 @@ export class PaulletteRunner {
 		return await new Promise<RunOutcome>((resolve) => {
 			const childProcess = ChildProcess.spawn(
 				'npx',
-				['tsx', MAIN_FILE_PATH, ...request.commandLineArguments],
+				['tsx', '--conditions=development', MAIN_FILE_PATH, ...request.commandLineArguments],
 				{
 					cwd: request.workingDirectoryPath,
 					stdio: ['ignore', 'pipe', 'pipe'],
@@ -185,7 +185,7 @@ export class PaulletteRunner {
 	/**
 	 * Says whether the command line entry point of paullette exists yet.
 	 *
-	 * @returns True when `src/cli.ts` exists.
+	 * @returns True when `packages/paullette-cli/src/cli.ts` exists.
 	 */
 	static isBuilt(): boolean {
 		return Fs.existsSync(MAIN_FILE_PATH);

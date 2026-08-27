@@ -29,7 +29,7 @@ export class VerificationHelpers {
 	 */
 	static pendingWhenNotReady(outcome: RunOutcome, missingPartName: string): VerificationResult | null {
 		if (outcome.isBuilt === false) {
-			return VerificationResults.pending('src/cli.ts does not exist yet');
+			return VerificationResults.pending('packages/paullette-cli/src/cli.ts does not exist yet');
 		}
 
 		if (PaulletteRunner.isOptionUnsupported(outcome) === true) {

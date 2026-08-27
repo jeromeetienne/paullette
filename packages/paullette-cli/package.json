@@ -1,0 +1,48 @@
+{
+	"name": "paullette",
+	"version": "0.1.2",
+	"description": "An AI coding agent command line interface, compatible with the .claude folder, running on any OpenAI API compatible endpoint",
+	"type": "module",
+	"license": "MIT",
+	"bin": {
+		"paullette": "./dist/cli.js"
+	},
+	"scripts": {
+		"start": "tsx --conditions=development ./src/cli.ts",
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc --noEmit -p tsconfig.json",
+		"test:unit": "node --import tsx --conditions=development --test \"test/unit/**/*_test.ts\"",
+		"clean": "rm -rf dist"
+	},
+	"dependencies": {
+		"@openai/agents": "^0.17.0",
+		"chalk": "^6.0.0",
+		"commander": "^15.0.0",
+		"paullette-core": "0.1.2"
+	},
+	"engines": {
+		"node": ">=20.11.0"
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/jeromeetienne/paullette.git",
+		"directory": "packages/paullette-cli"
+	},
+	"homepage": "https://github.com/jeromeetienne/paullette#readme",
+	"bugs": {
+		"url": "https://github.com/jeromeetienne/paullette/issues"
+	},
+	"keywords": [
+		"ai",
+		"coding-agent",
+		"cli",
+		"openai",
+		"llm",
+		"claude-code",
+		"agent"
+	]
+}

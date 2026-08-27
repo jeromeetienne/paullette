@@ -1,0 +1,52 @@
+{
+	"name": "paullette-core",
+	"version": "0.1.2",
+	"description": "The agent, the configuration, the .paullette folder reader, the history, the memory, and the tools of paullette, without any user interface",
+	"type": "module",
+	"license": "MIT",
+	"exports": {
+		"./*": {
+			"development": "./src/*.ts",
+			"types": "./dist/*.d.ts",
+			"default": "./dist/*.js"
+		},
+		"./test_helpers/*": {
+			"development": "./test/libs/*.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc --noEmit -p tsconfig.json",
+		"test:unit": "node --import tsx --conditions=development --test \"test/unit/**/*_test.ts\"",
+		"clean": "rm -rf dist"
+	},
+	"dependencies": {
+		"@openai/agents": "^0.17.0",
+		"openai": "^7.7.0",
+		"yaml": "^2.9.0",
+		"zod": "^4.4.3"
+	},
+	"engines": {
+		"node": ">=20.11.0"
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/jeromeetienne/paullette.git",
+		"directory": "packages/paullette-core"
+	},
+	"homepage": "https://github.com/jeromeetienne/paullette#readme",
+	"bugs": {
+		"url": "https://github.com/jeromeetienne/paullette/issues"
+	},
+	"keywords": [
+		"ai",
+		"coding-agent",
+		"openai",
+		"llm",
+		"agent"
+	]
+}
