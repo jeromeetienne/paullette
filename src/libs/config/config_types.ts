@@ -15,7 +15,7 @@ export const doublureConfigSchema = z.object({
 	baseUrl: z.string().min(1),
 	/** The key sent to the OpenAI API compatible endpoint. Local endpoints accept any value. */
 	apiKey: z.string().min(1),
-	/** The identifier of the model to use on that endpoint, for example `google/gemma-4-e2b`. */
+	/** The identifier of the model to use on that endpoint, for example `qwen3.5-4b`. */
 	modelName: z.string().min(1),
 	/** The folder the agent reads files from and runs shell commands in. */
 	workingDirectoryPath: z.string().min(1),
@@ -45,8 +45,12 @@ export const DEFAULT_API_KEY = 'lm-studio';
 
 /**
  * The default model identifier.
+ *
+ * `qwen3.5-4b` is the default because it calls a tool that takes several arguments reliably. The smaller
+ * `google/gemma-4-e2b` answers well and calls a one-argument tool, but emits malformed JSON for the four-field
+ * object that `memory_write` takes, so the call never reaches the tool and the memory silently fails to save.
  */
-export const DEFAULT_MODEL_NAME = 'google/gemma-4-e2b';
+export const DEFAULT_MODEL_NAME = 'qwen3.5-4b';
 
 /**
  * The default largest number of model turns a single request is allowed to take.

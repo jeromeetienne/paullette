@@ -46,7 +46,7 @@ The goal is the smallest thing that proves the whole chain works: command line t
 - [x] `src/libs/agent/model_provider.ts` — the three OpenAI Agents SDK calls from the plan
 - [x] `src/libs/agent/system_prompt_builder.ts` — a system prompt with no `.doublure` content yet
 - [x] `src/libs/agent/agent_builder.ts` — an agent with no tools yet
-- [x] `src/main.ts` — Commander.js option parsing and the `--print` one-shot mode → verification step `typecheck`, `endpoint`, `oneShotAnswer`
+- [x] `src/cli.ts` — Commander.js option parsing and the `--print` one-shot mode → verification step `typecheck`, `endpoint`, `oneShotAnswer`
 
 ## Milestone 2 — the tools and the permission prompt
 
@@ -110,11 +110,11 @@ Milestone 1 made `--print` work, and that turned five PENDING steps into FAIL ev
 
 The capability line above is the fix. Every check that calls the model now asks what doublure can do before it judges what doublure did.
 
-### Which model the verification runs against, changed during Milestone 4
+### The default model, changed twice
 
-The verification runner used to call `google/gemma-4-e2b`, the default model of doublure. Milestone 4 showed that it cannot call `memory_write`: it emits malformed JSON for a four-field tool call, so the call never reaches the tool at all. The same code passes on `qwen3.5-4b` first time. The memory store is not at fault, and reshaping a sound tool to suit a two billion parameter model would have been the wrong trade, so the verification runner now calls `qwen3.5-4b` and doublure keeps `google/gemma-4-e2b` as its own default.
+The verification runner used to call `google/gemma-4-e2b`, the default model of doublure at the time. Milestone 4 showed that it cannot call `memory_write`: it emits malformed JSON for a four-field tool call, so the call never reaches the tool at all. The same code passes on `qwen3.5-4b` first time. The memory store is not at fault, and reshaping a sound tool to suit a two billion parameter model would have been the wrong trade, so the verification runner moved to `qwen3.5-4b` while doublure kept `google/gemma-4-e2b` as its own default.
 
-This is worth knowing beyond the harness: doublure's default model handles a one-argument tool well and a four-argument tool badly. Whether that default should change is a real question, not a test detail.
+That left the open question of whether the default itself should change. Running doublure by hand answered it: asking the default model to remember a fact produced "I was unable to save the fact to memory due to an error when using the tool" and nothing on disk, while the same request on `qwen3.5-4b` wrote both `.doublure/memory/default-endpoint.md` and its `MEMORY.md` index line, and a later run read the fact back through `memory_list` and `memory_read`. A default model that cannot use a whole feature of the product is the wrong default, so `qwen3.5-4b` is now the default of doublure. The verification runner and doublure call the same model again.
 
 Setting `DOUBLURE_MODEL` still overrides both.
 

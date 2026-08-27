@@ -14,4 +14,4 @@ Reads and writes `.doublure/memory`, which is where doublure keeps what it was a
 - The name of a fact goes through `MemoryStore.toFileName` before it touches the disk. The model chooses these names, so they cannot be trusted to be safe file names.
 
 ## Background
-- `google/gemma-4-e2b`, which is the default model of doublure, cannot reliably call `memory_write`: it emits malformed JSON for a four-field tool call. See the note at the end of `TODO.md`.
+- `memory_write` takes four arguments, and a model has to build one JSON object holding all four to call it. `google/gemma-4-e2b` cannot do that: it emits malformed JSON and the call never reaches the tool. That is why doublure defaults to `qwen3.5-4b`. See the note at the end of `TODO.md`.
