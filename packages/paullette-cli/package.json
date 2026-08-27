@@ -22,7 +22,7 @@
 		"paullette-web": "0.1.2"
 	},
 	"engines": {
-		"node": ">=20.11.0"
+		"node": ">=22.13.0"
 	},
 	"files": [
 		"dist",

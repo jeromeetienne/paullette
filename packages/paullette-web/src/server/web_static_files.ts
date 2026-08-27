@@ -1,54 +1,19 @@
-import Fs from 'node:fs';
 import Path from 'node:path';
 import Url from 'node:url';
 
+import type Express from 'express';
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	WebStaticFiles — serves the page, the stylesheets, and the script
+//	WebStaticFiles — where the files the browser is sent are on the disk
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * One file the browser may ask for, and what it is.
+ * Where every file the browser is sent sits on the disk of this machine.
  *
- * The list is written out rather than read from the folder, so that a path arriving from a web address can never
- * reach a file that was not meant to be sent. There is no path to resolve and nothing to climb out of.
- */
-const SERVED_FILES: Record<string, { resolveFilePath: () => string; contentType: string }> = {
-	'/': {
-		resolveFilePath: () => Path.join(WebStaticFiles.folderPath(), 'index.html'),
-		contentType: 'text/html; charset=utf-8',
-	},
-	'/index.html': {
-		resolveFilePath: () => Path.join(WebStaticFiles.folderPath(), 'index.html'),
-		contentType: 'text/html; charset=utf-8',
-	},
-	'/bootstrap.css': {
-		resolveFilePath: () => WebStaticFiles.bootstrapStylesheetPath(),
-		contentType: 'text/css; charset=utf-8',
-	},
-	'/paullette.css': {
-		resolveFilePath: () => Path.join(WebStaticFiles.folderPath(), 'paullette.css'),
-		contentType: 'text/css; charset=utf-8',
-	},
-	'/paullette.js': {
-		resolveFilePath: () => Path.join(WebStaticFiles.folderPath(), 'paullette.js'),
-		contentType: 'text/javascript; charset=utf-8',
-	},
-};
-
-/**
- * One file, ready to be written to the browser.
- */
-export type StaticFile = {
-	/** What the file is, for the `content-type` header. */
-	contentType: string;
-	/** The bytes of the file. */
-	content: Buffer;
-};
-
-/**
- * Serves the page, the stylesheets, and the script.
+ * Nothing is read here. The reading is `express.static`, which `WebApplication` mounts on these folders; this
+ * class only says where they are.
  */
 export class WebStaticFiles {
 	/**
@@ -60,8 +25,18 @@ export class WebStaticFiles {
 	 *
 	 * @returns The absolute path of the `public/` folder.
 	 */
-	static folderPath(): string {
+	static publicFolderPath(): string {
 		return Path.join(import.meta.dirname, '..', '..', 'public');
+	}
+
+	/**
+	 * The absolute path of the folder served at the root of the address: the page, its stylesheet, and the
+	 * TypeScript of its script.
+	 *
+	 * @returns The absolute path of `public/chat/`.
+	 */
+	static chatFolderPath(): string {
+		return Path.join(WebStaticFiles.publicFolderPath(), 'chat');
 	}
 
 	/**
@@ -78,37 +53,29 @@ export class WebStaticFiles {
 	}
 
 	/**
-	 * Every path the browser may ask a file at.
+	 * The absolute path of the folder the stylesheet of Bootstrap sits in, which is what is mounted at
+	 * `/vendor/bootstrap`.
 	 *
-	 * The router registers one route for each of them, so that Express matches a whole path against this list
-	 * and never resolves a path from a web address against a folder.
-	 *
-	 * @returns The paths, in the order they are written out above.
+	 * @returns The absolute path of `bootstrap/dist/css/`.
 	 */
-	static servedPaths(): string[] {
-		return Object.keys(SERVED_FILES);
+	static bootstrapStylesheetFolderPath(): string {
+		return Path.dirname(WebStaticFiles.bootstrapStylesheetPath());
 	}
 
 	/**
-	 * Reads the file a browser asked for.
+	 * Names the TypeScript of the script as text, so that a browser shows it rather than offering to save it.
 	 *
-	 * @param pathName The path of the request, with no query string.
-	 * @returns The file, or null when nothing is served at that path.
+	 * The page asks for its script at `/js/chat_page.js`, and the JavaScript it is answered with names
+	 * `/src/chat_page.ts` as where it was written. A browser that follows that name asks for a `.ts` file, and
+	 * the table of file types every static file server carries reads `.ts` as a video stream.
+	 *
+	 * @param response The answer being written.
+	 * @param filePath The absolute path of the file being sent.
+	 * @returns Nothing.
 	 */
-	static read(pathName: string): StaticFile | null {
-		const served = SERVED_FILES[pathName];
-		if (served === undefined) {
-			return null;
+	static nameTypeScriptAsText(response: Express.Response, filePath: string): void {
+		if (Path.extname(filePath) === '.ts') {
+			response.setHeader('content-type', 'text/plain; charset=utf-8');
 		}
-
-		const filePath = served.resolveFilePath();
-		if (Fs.existsSync(filePath) === false) {
-			return null;
-		}
-
-		return {
-			contentType: served.contentType,
-			content: Fs.readFileSync(filePath),
-		};
 	}
 }

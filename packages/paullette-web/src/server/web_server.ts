@@ -1,10 +1,9 @@
-import Express from 'express';
 import Http from 'node:http';
 
+import { WebApplication } from './web_application.ts';
 import { type WebConversation } from './web_conversation.ts';
 import { type WebEventStream } from './web_event_stream.ts';
 import { type WebPermissionAsker } from './web_permission_asker.ts';
-import { WebRouter } from './web_router.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -31,9 +30,9 @@ export type WebServerRequest = {
 /**
  * The web server of paullette.
  *
- * It is an Express application served by the `node:http` module of Node.js. Nothing is added to Express beyond
- * the router, no compression above all: the stream at `/api/events` has to reach the browser as each event is
- * written, and a compressor holds what it is given until it has enough of it to be worth compressing.
+ * It is the Express application `WebApplication` builds, served by the `node:http` module of Node.js. This
+ * class holds nothing but the listening and the closing: `node:http` is used directly rather than
+ * `application.listen()` so that closing can wait for the server to be shut before it returns.
  */
 export class WebServer {
 	/** Everything the server needs. */
@@ -49,11 +48,12 @@ export class WebServer {
 	constructor(request: WebServerRequest) {
 		this._request = request;
 
-		const application = Express();
-		application.disable('x-powered-by');
-		application.use(new WebRouter(request.conversation, request.eventStream).build());
-
-		this._server = Http.createServer(application);
+		this._server = Http.createServer(
+			WebApplication.build({
+				conversation: request.conversation,
+				eventStream: request.eventStream,
+			}),
+		);
 	}
 
 	/**

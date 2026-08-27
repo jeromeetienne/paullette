@@ -13,7 +13,7 @@
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
-		"typecheck": "tsc --noEmit -p tsconfig.json",
+		"typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.browser.json",
 		"test:unit": "node --import tsx --conditions=development --test \"test/unit/**/*_test.ts\"",
 		"clean": "rm -rf dist"
 	},
@@ -25,7 +25,7 @@
 		"paullette-core": "0.1.2"
 	},
 	"engines": {
-		"node": ">=20.11.0"
+		"node": ">=22.13.0"
 	},
 	"files": [
 		"dist",

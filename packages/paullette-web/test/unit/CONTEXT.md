@@ -9,7 +9,8 @@ Holds the unit test suite of the `paullette-web` package: one test file per sour
 
 ## Rules
 - A test here never calls a model and never reaches a machine other than this one, so the whole folder runs in seconds and needs no local endpoint running.
-- A test never starts the web server on a fixed port. `web_router_test.ts` starts the Express application on the port the operating system gives it and asks it over the network, and every other test calls the permission asker and the static file server directly, so that two test runs at once cannot collide.
+- A test never starts the web server on a fixed port. `web_api_router_test.ts` and `web_application_test.ts` start the Express application on the port the operating system gives it and ask it over the network, and every other test calls the code directly, so that two test runs at once cannot collide.
+- `web_application_test.ts` builds the application with an empty object in place of the conversation, because not one of its tests reaches the conversation. Standing an agent and a session store up to hold a conversation nothing touches would say the opposite of what is true.
 - A test never writes into the repository. It writes into a folder made by `TemporaryFolder`, and removes it in an `afterEach`.
 - The shared test helpers are reached as `paullette-core/test_helpers/<file name>`, never through a relative path that climbs out of `packages/paullette-web`. They are not copied here; the one copy lives in `packages/paullette-core/test/libs/`.
 

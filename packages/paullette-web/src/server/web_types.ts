@@ -74,6 +74,23 @@ export type WebEvent =
 	  };
 
 /**
+ * One permission question waiting for an answer, as the browser is given it.
+ *
+ * The `permissionRequested` event carries the same four fields beside its `kind`, so the page draws a question
+ * that arrives on the stream and a question that arrives in the state with the one piece of code.
+ */
+export type WebPermissionQuestion = {
+	/** What the answer must be sent back with, so that the right waiting tool is released. */
+	identifier: string;
+	/** The name of the tool that is asking. */
+	toolName: string;
+	/** One line saying what is about to happen. */
+	summary: string;
+	/** The text the user should read before deciding, or null when there is none. */
+	detail: string | null;
+};
+
+/**
  * The body the browser sends to start one turn.
  */
 export type MessageRequestBody = {
@@ -89,6 +106,8 @@ export type PermissionRequestBody = {
 	identifier: string;
 	/** What the user answered. */
 	decision: PermissionDecision;
+	/** True when the tool may go ahead for the rest of this run without asking again. */
+	isAlways?: boolean;
 };
 
 /**
@@ -116,12 +135,7 @@ export type WebState = {
 	/** True while a turn is running, so a second browser does not offer to send a message. */
 	isTurnRunning: boolean;
 	/** The permission question waiting for an answer, or null when there is none. */
-	pendingPermission: {
-		identifier: string;
-		toolName: string;
-		summary: string;
-		detail: string | null;
-	} | null;
+	pendingPermission: WebPermissionQuestion | null;
 };
 
 /**
@@ -136,4 +150,30 @@ export type WebSessionSummary = {
 	modelName: string;
 	/** How many items the conversation holds. */
 	itemCount: number;
+};
+
+/**
+ * The answer of `GET /api/sessions`.
+ */
+export type WebSessionListBody = {
+	/** The past conversations in the sessions folder, newest first. */
+	sessions: WebSessionSummary[];
+};
+
+/**
+ * The answer of `GET /api/sessions/<identifier>`.
+ */
+export type WebSessionMessagesBody = {
+	/** The conversation that was read. */
+	identifier: string;
+	/** Everything said in it. */
+	messages: WebConversationMessage[];
+};
+
+/**
+ * The answer of every route that could not do what it was asked.
+ */
+export type WebErrorBody = {
+	/** What went wrong, in words a person can read. */
+	error: string;
 };

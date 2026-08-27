@@ -36,7 +36,7 @@ The browser reads one stream and sends everything it has to say in an ordinary r
 
 | Method and path | What it does |
 | --- | --- |
-| `GET /` | The page. `GET /bootstrap.css`, `GET /paullette.css`, and `GET /paullette.js` are the other three files. |
+| `GET /` | The page. `GET /css/chat_page.css`, `GET /js/chat_page.js`, and `GET /vendor/bootstrap/bootstrap.min.css` are the three files it asks for. |
 | `GET /api/events` | The stream of everything that happens in the conversation, as server-sent events. |
 | `GET /api/state` | The conversation so far and the question waiting for an answer, for a browser that has just connected. |
 | `POST /api/message` | Starts one turn. It answers `202` at once and does not wait for the turn. |
@@ -46,7 +46,19 @@ The browser reads one stream and sends everything it has to say in an ordinary r
 
 The events written on the stream: `turnStarted`, `text`, `toolCalled`, `toolOutput`, `permissionRequested`, `permissionAnswered`, `answerRendered`, `turnEnded`, and `error`.
 
-The routes are an Express router, mounted on an Express application that `node:http` serves. Nothing else is mounted on that application, no compression above all: the stream at `/api/events` has to reach the browser as each event is written, and a compressor holds what it is given until it has enough of it to be worth compressing.
+The routes under `/api` are one Express router, mounted at `/api` on an Express application that `node:http` serves. The application is put together in the order any Express application is:
+
+```
+express.json({ limit: '200kb' })              the reader of a body
+/api                 -> WebApiRouter          everything the browser asks
+/js                  -> WebBrowserScript      the script, made from its TypeScript
+/vendor/bootstrap    -> express.static        the stylesheet of Bootstrap, off the disk
+/                    -> express.static        public/chat/
+                        the address nothing is served at
+                        the answer of last resort
+```
+
+Nothing else is mounted, no compression above all: the stream at `/api/events` has to reach the browser as each event is written, and a compressor holds what it is given until it has enough of it to be worth compressing.
 
 Server-sent events were chosen over a websocket because the stream only ever runs one way, from the server to the browser. Everything the browser has to say fits in a short request.
 
@@ -108,7 +120,7 @@ The page itself never builds HTML out of text. The HTML of an answer always come
 
 Everything the page looks like comes from Bootstrap. It is a dependency of `paullette-web`, and it is read off the disk of the machine paullette runs on, at `node_modules/bootstrap/dist/css/bootstrap.min.css`, never fetched from a content delivery network. The server listens on the loopback address by default, and a page that needed the internet to look right would be wrong.
 
-The elements of the page carry Bootstrap classes and nothing else, and `public/paullette.css` holds three rules. Each one is there because no Bootstrap class can reach what it does, and each one says so beside itself:
+The elements of the page carry Bootstrap classes and nothing else, and `public/chat/css/chat_page.css` holds three rules. Each one is there because no Bootstrap class can reach what it does, and each one says so beside itself:
 
 | The rule | Why it cannot be a Bootstrap class |
 | --- | --- |
@@ -123,15 +135,28 @@ Bootstrap follows the light or dark setting of the machine for nothing on its ow
 ```
 packages/paullette-web/
 	src/web_interface.ts          WebInterface.start(), the one thing paullette-cli imports
-	src/server/                   the server, the routes, the stream, the permission asker, the Markdown
-	public/index.html             the page
-	public/paullette.css          the three rules Bootstrap cannot reach
-	public/paullette.js           the script, plain JavaScript, sent to the browser as it is
+	src/server/                   the server, the application, the routers, the stream, the permission asker
+	public/chat/index.html        the page
+	public/chat/css/chat_page.css the three rules Bootstrap cannot reach
+	public/chat/src/chat_page.ts  the script, in TypeScript
+	tsconfig.browser.json         the one configuration that checks TypeScript against a browser
 ```
 
 `public/` sits beside `src/` and never inside it, because `tsc` copies no file that is not TypeScript. It is found at run time with `Path.join(import.meta.dirname, '..', '..', 'public')`, which resolves the same way from `src/server/` during development and from `dist/server/` once published.
 
-The list of files the server will send is written out in `web_static_files.ts`, and the router registers one route for each whole path in it. `express.static` is never used, and no path from a web address is ever resolved against a folder, so there is nothing to climb out of. `SessionStore.loadSession` takes the same care: it refuses any identifier that is not the shape `startSession` makes, because that identifier arrives from `GET /api/sessions/<identifier>`.
+`express.static` is mounted on `public/chat/` and on the stylesheet folder of Bootstrap, and nothing resolves a path from a web address by hand. `express.static` refuses a path that climbs out of the folder it was mounted on. `SessionStore.loadSession` takes the same care in the one place a path is still built from what a browser sent: it refuses any identifier that is not the shape `startSession` makes, because that identifier arrives from `GET /api/sessions/<identifier>`.
+
+## The script of the page is TypeScript, and nothing builds it
+
+`public/chat/src/chat_page.ts` is TypeScript, and a browser runs JavaScript. `WebBrowserScript` is the one step between the two: on every request for `/js/chat_page.js` it reads the TypeScript and hands it to `stripTypeScriptTypes` of `node:module`, which replaces each type with as many spaces as it took. Every line and every column of what the browser runs is where it is in the file on disk, and the JavaScript ends with `//# sourceURL=/src/chat_page.ts`, which `express.static` serves as text.
+
+There is no build step and no built file sitting beside its source going stale. Editing the script and reloading the page is the whole of what it takes to see the change, whether paullette is run from a clone or installed from npm. What it costs:
+
+- The script may hold no `enum` and no `namespace`. They are the two things types cannot simply be taken out of, and either one stops the page from being served at all.
+- Node.js 22.13 or newer is needed. `stripTypeScriptTypes` arrived there, and it is why the `engines` field of this package asks for it.
+- Node.js says once, on the first page a browser opens, that `stripTypeScriptTypes` is still an experimental feature.
+
+The script imports the types of every event and every body from `src/server/web_types.ts`, as types and never as values, so the two sides cannot drift apart. Those imports are gone from what the browser is sent. They are checked by `tsconfig.browser.json`, which is the one configuration in this repository that declares the library of a browser and no type of Node.js.
 
 ## What it does not do yet
 
@@ -143,7 +168,7 @@ The list of files the server will send is written out in `web_static_files.ts`, 
 
 Two verification steps, both in `npm run verify`:
 
-- `webInterfaceServed` calls no model. It starts `paullette web --port 0` and asks for the page, the script, the state, and an address nothing is served at.
+- `webInterfaceServed` calls no model. It starts `paullette web --port 0` and asks for the page, the script, the stylesheet of Bootstrap, the state, and an address nothing is served at. It checks that the script holds the class the page runs and no TypeScript a browser could not.
 - `webTurnAnswered` holds a whole turn: it opens the stream, sends a message, answers the permission question over a second request while the turn is parked on it, waits for `turnEnded`, and then reads the file the tool wrote off the disk.
 
 The unit tests of `packages/paullette-web` never call a model, and the one that asks the routes for an answer starts the Express application on a port the operating system chooses, so that two test runs at once cannot collide. The full account of both suites is in [`testing.md`](testing.md).

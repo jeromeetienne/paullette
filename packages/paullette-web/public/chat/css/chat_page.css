@@ -1,8 +1,9 @@
 /*
 	The stylesheet of the paullette web interface.
 
-	Everything the page looks like comes from Bootstrap, which is served at /bootstrap.css off the disk of this
-	machine. What is left here is only what no Bootstrap class can reach, and every rule says why.
+	Everything the page looks like comes from Bootstrap, which is served at /vendor/bootstrap/bootstrap.min.css
+	off the disk of this machine. What is left here is only what no Bootstrap class can reach, and every rule
+	says why.
 */
 
 /*

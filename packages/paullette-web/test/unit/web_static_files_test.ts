@@ -7,19 +7,33 @@ import { WebStaticFiles } from '../../src/server/web_static_files.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	web_static_files_test — checks the files written out are served and nothing else is
+//	web_static_files_test — checks every folder the application mounts is where it is said to be
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-describe('WebStaticFiles.folderPath', () => {
-	test('points at a folder that holds the three files of this package sent to the browser', () => {
-		const folderPath = WebStaticFiles.folderPath();
+describe('WebStaticFiles.publicFolderPath', () => {
+	test('points at the public folder of this package', () => {
+		const folderPath = WebStaticFiles.publicFolderPath();
 
 		Assert.equal(Fs.existsSync(folderPath), true, `${folderPath} should exist`);
 		Assert.equal(Path.basename(folderPath), 'public');
+	});
+});
+
+describe('WebStaticFiles.chatFolderPath', () => {
+	test('points at the folder holding the page, its stylesheet, and the TypeScript of its script', () => {
+		const folderPath = WebStaticFiles.chatFolderPath();
+
 		Assert.equal(Fs.existsSync(Path.join(folderPath, 'index.html')), true);
-		Assert.equal(Fs.existsSync(Path.join(folderPath, 'paullette.css')), true);
-		Assert.equal(Fs.existsSync(Path.join(folderPath, 'paullette.js')), true);
+		Assert.equal(Fs.existsSync(Path.join(folderPath, 'css', 'chat_page.css')), true);
+		Assert.equal(Fs.existsSync(Path.join(folderPath, 'src', 'chat_page.ts')), true);
+	});
+
+	test('sits under the public folder, so that one mount serves the whole of it', () => {
+		Assert.equal(
+			WebStaticFiles.chatFolderPath().startsWith(WebStaticFiles.publicFolderPath() + Path.sep),
+			true,
+		);
 	});
 });
 
@@ -33,49 +47,11 @@ describe('WebStaticFiles.bootstrapStylesheetPath', () => {
 	});
 });
 
-describe('WebStaticFiles.servedPaths', () => {
-	test('names every path a route is registered for, and no other', () => {
-		Assert.deepEqual(WebStaticFiles.servedPaths(), [
-			'/',
-			'/index.html',
-			'/bootstrap.css',
-			'/paullette.css',
-			'/paullette.js',
-		]);
-	});
-});
+describe('WebStaticFiles.bootstrapStylesheetFolderPath', () => {
+	test('points at the folder that stylesheet sits in, which is what is mounted', () => {
+		const folderPath = WebStaticFiles.bootstrapStylesheetFolderPath();
 
-describe('WebStaticFiles.read', () => {
-	test('serves the page at the root of the address', () => {
-		const staticFile = WebStaticFiles.read('/');
-
-		Assert.notEqual(staticFile, null);
-		Assert.equal(staticFile?.contentType, 'text/html; charset=utf-8');
-		Assert.match(staticFile?.content.toString('utf8') ?? '', /<title>paullette<\/title>/);
-	});
-
-	test('serves the stylesheet and the script under the names the page asks for', () => {
-		Assert.equal(WebStaticFiles.read('/paullette.css')?.contentType, 'text/css; charset=utf-8');
-		Assert.equal(WebStaticFiles.read('/paullette.js')?.contentType, 'text/javascript; charset=utf-8');
-	});
-
-	test('serves the stylesheet of Bootstrap the page lays itself out with', () => {
-		const staticFile = WebStaticFiles.read('/bootstrap.css');
-
-		Assert.equal(staticFile?.contentType, 'text/css; charset=utf-8');
-		Assert.match(staticFile?.content.toString('utf8') ?? '', /Bootstrap/);
-	});
-
-	test('serves nothing at a path that is not one of the five written out in the file', () => {
-		Assert.equal(WebStaticFiles.read('/package.json'), null);
-		Assert.equal(WebStaticFiles.read('/paullette.css.map'), null);
-		Assert.equal(WebStaticFiles.read('/bootstrap.min.css'), null);
-		Assert.equal(WebStaticFiles.read(''), null);
-	});
-
-	test('serves nothing for a path that tries to climb out of the folder', () => {
-		Assert.equal(WebStaticFiles.read('/../package.json'), null);
-		Assert.equal(WebStaticFiles.read('/../../../../etc/passwd'), null);
-		Assert.equal(WebStaticFiles.read('/public/../package.json'), null);
+		Assert.equal(Fs.existsSync(Path.join(folderPath, 'bootstrap.min.css')), true);
+		Assert.equal(Path.basename(folderPath), 'css');
 	});
 });

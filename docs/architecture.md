@@ -13,7 +13,7 @@ The repository is an npm workspace with one package per part.
 | Folder | Published as | What it is |
 | --- | --- | --- |
 | `packages/paullette-core` | `paullette-core` | The agent, the configuration, the `.paullette` folder reader, the history, the memory, the Model Context Protocol layer, and every tool. No user interface. |
-| `packages/paullette-web` | `paullette-web` | The web interface: the web server, the routes, and the three files sent to the browser. This is what `npx paullette web` starts. |
+| `packages/paullette-web` | `paullette-web` | The web interface: the web server, the Express application, the routes, and the files sent to the browser. This is what `npx paullette web` starts. |
 | `packages/paullette-cli` | `paullette` | The terminal interface and the command line entry point. This is what `npx paullette` runs. |
 
 `paullette-core` never imports from either front end, and it never will, because that one rule is what lets both of them sit on the same agent. The two front ends never import from each other either, with one exception written down on purpose: `packages/paullette-cli/src/cli.ts` imports `WebInterface` from `paullette-web`, because `npx paullette web` has to hand over to it, and `cli.ts` is the entry point rather than the terminal interface. `packages/paullette-cli/src/terminal/` imports nothing from `paullette-web`.
@@ -53,7 +53,7 @@ flowchart TD
 	SDK --> ENDPOINT
 ```
 
-The boundary is drawn, but one promise it implies is not yet kept. `paullette-core` still reads files through `node:fs` in `tools`, `history`, `memory`, `config_folder`, and `model_context_protocol`, so it does not run in a browser today. The web interface does not need it to: the whole of `paullette-web` runs in Node.js, and the only thing that reaches a browser is the three files in its `public/` folder.
+The boundary is drawn, but one promise it implies is not yet kept. `paullette-core` still reads files through `node:fs` in `tools`, `history`, `memory`, `config_folder`, and `model_context_protocol`, so it does not run in a browser today. The web interface does not need it to: the whole of `paullette-web` runs in Node.js, and the only thing that reaches a browser is what sits under its `public/chat/` folder.
 
 ## The folders inside `paullette-core`
 
@@ -82,7 +82,7 @@ Each of those folders carries its own `CONTEXT.md` saying what may be imported f
 | --- | --- |
 | `src/web_interface.ts` | `WebInterface.start()`, the one thing `paullette-cli` imports from this package. |
 | `src/server/` | The Express application, the routes, the one shared conversation, the server-sent events stream, the permission asker the browser answers, the Markdown, and the serving of the files the browser asks for. |
-| `public/` | The page, the three stylesheet rules Bootstrap cannot reach, and the script. Plain files, sent to the browser as they are. Bootstrap itself is served out of `node_modules/bootstrap`. |
+| `public/` | The page, the three stylesheet rules Bootstrap cannot reach, and the script. `express.static` is mounted on `public/chat/`; the script is TypeScript, and its types are taken out as it is served. Bootstrap itself is served out of `node_modules/bootstrap`. |
 
 The full account of the web interface is in [`web_interface.md`](web_interface.md).
 

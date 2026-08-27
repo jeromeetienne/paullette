@@ -54,10 +54,10 @@ export class VerificationChecksStatic {
 	}
 
 	/**
-	 * Starts `paullette web`, and asks it for the page, for the script, for the state, and for an address that
-	 * is served by nothing.
+	 * Starts `paullette web`, and asks it for the page, for its script, for the stylesheet of Bootstrap, for
+	 * the state, and for an address that is served by nothing.
 	 *
-	 * No model is called: none of these four requests starts a turn.
+	 * No model is called: none of these five requests starts a turn.
 	 *
 	 * @returns Whether the web interface listened and answered.
 	 */
@@ -79,10 +79,22 @@ export class VerificationChecksStatic {
 						return;
 					}
 
-					const script = await fetch(`${address}/paullette.js`);
-					seen.push(`GET /paullette.js gave ${script.status} ${script.headers.get('content-type')}`);
-					if (script.status !== 200) {
+					const script = await fetch(`${address}/js/chat_page.js`);
+					const scriptText = await script.text();
+					seen.push(`GET /js/chat_page.js gave ${script.status} ${script.headers.get('content-type')}`);
+					if (script.status !== 200 || scriptText.includes('class ChatPage') === false) {
 						failure = 'the script of the page was not served';
+						return;
+					}
+					if (scriptText.includes('import type') === true) {
+						failure = 'the script of the page still holds TypeScript a browser cannot run';
+						return;
+					}
+
+					const stylesheet = await fetch(`${address}/vendor/bootstrap/bootstrap.min.css`);
+					seen.push(`GET /vendor/bootstrap/bootstrap.min.css gave ${stylesheet.status}`);
+					if (stylesheet.status !== 200) {
+						failure = 'the stylesheet of Bootstrap was not served off the disk of this machine';
 						return;
 					}
 

@@ -41,12 +41,17 @@ export type WebConversationRequest = {
 /**
  * What happened when a browser asked to send a message.
  */
-export type SendMessageOutcome = {
-	/** True when the turn was started, false when it was refused. */
-	isStarted: boolean;
-	/** Why it was refused, in words a person can read, or null when it was started. */
-	refusedReason: string | null;
-};
+export type SendMessageOutcome =
+	/** The turn was started. */
+	| {
+			isStarted: true;
+	  }
+	/** The message was refused. It was not queued, and nothing was started. */
+	| {
+			isStarted: false;
+			/** Why it was refused, in words a person can read. */
+			refusedReason: string;
+	  };
 
 /**
  * One conversation, held by one running server and shared by every browser that connects.
@@ -149,7 +154,6 @@ export class WebConversation {
 
 		return {
 			isStarted: true,
-			refusedReason: null,
 		};
 	}
 

@@ -1,5 +1,4 @@
 import Assert from 'node:assert/strict';
-import Express from 'express';
 import Http from 'node:http';
 import Path from 'node:path';
 import { afterEach, beforeEach, describe, test } from 'node:test';
@@ -11,11 +10,11 @@ import { TemporaryFolder } from 'paullette-core/test_helpers/temporary_folder';
 import { WebConversation } from '../../src/server/web_conversation.ts';
 import { WebEventStream } from '../../src/server/web_event_stream.ts';
 import { WebPermissionAsker } from '../../src/server/web_permission_asker.ts';
-import { WebRouter } from '../../src/server/web_router.ts';
+import { WebApplication } from '../../src/server/web_application.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	web_router_test — checks each method and path reaches the answer it should
+//	web_api_router_test — checks each method and path under /api reaches the answer it should
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -25,7 +24,7 @@ import { WebRouter } from '../../src/server/web_router.ts';
  */
 const MODEL_NAME = 'a-model-that-is-never-called';
 
-describe('The routes of the web interface', () => {
+describe('The routes under /api', () => {
 	/** The folder the session store writes into, removed after each test. */
 	let temporaryFolderPath: string;
 	/** The server the requests of the tests are made against, listening on a port the operating system chose. */
@@ -67,9 +66,12 @@ describe('The routes of the web interface', () => {
 			maximumTurnCount: 1,
 		});
 
-		const application = Express();
-		application.use(new WebRouter(webConversation, webEventStream).build());
-		server = Http.createServer(application);
+		server = Http.createServer(
+			WebApplication.build({
+				conversation: webConversation,
+				eventStream: webEventStream,
+			}),
+		);
 
 		await new Promise<void>((resolve) => {
 			server.listen(0, '127.0.0.1', () => resolve());
@@ -219,23 +221,8 @@ describe('The routes of the web interface', () => {
 		Assert.equal(((await answer.json()) as Record<string, unknown>)['error'], 'The message is empty.');
 	});
 
-	test('serves the page at the root of the address', async () => {
-		const answer = await fetch(`${address}/`);
-
-		Assert.equal(answer.status, 200);
-		Assert.equal(answer.headers.get('content-type'), 'text/html; charset=utf-8');
-	});
-
-	test('serves the stylesheet of Bootstrap it was asked to lay the page out with', async () => {
-		const answer = await fetch(`${address}/bootstrap.css`);
-
-		Assert.equal(answer.status, 200);
-		Assert.equal(answer.headers.get('content-type'), 'text/css; charset=utf-8');
-		Assert.match(await answer.text(), /Bootstrap/);
-	});
-
-	test('answers with a not found at an address nothing is served at', async () => {
-		const answer = await fetch(`${address}/nothing-here`);
+	test('answers with a not found at a path under /api nothing is served at', async () => {
+		const answer = await fetch(`${address}/api/nothing-here`);
 
 		Assert.equal(answer.status, 404);
 	});
