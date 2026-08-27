@@ -34,8 +34,8 @@ export class ToolRegistry {
 	/**
 	 * Narrows a tool list down to the names a subagent asked for in its frontmatter.
 	 *
-	 * A name that matches nothing is ignored rather than refused, because a `.code-agent` folder copied from a
-	 * Claude Code project names tools that code-agent does not have, and losing the whole subagent over one
+	 * A name that matches nothing is ignored rather than refused, because a `.paullette` folder copied from a
+	 * Claude Code project names tools that paullette does not have, and losing the whole subagent over one
 	 * unknown name would be worse than giving it a shorter list.
 	 *
 	 * @param tools The tools to choose from.

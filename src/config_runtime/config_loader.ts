@@ -5,13 +5,13 @@ import {
 	DEFAULT_BASE_URL,
 	DEFAULT_MAXIMUM_TURN_COUNT,
 	DEFAULT_MODEL_NAME,
-	codeAgentConfigSchema,
-	type CodeAgentConfig,
+	paulletteConfigSchema,
+	type PaulletteConfig,
 } from './config_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	ConfigLoader — builds the code-agent configuration from options, environment, and defaults
+//	ConfigLoader — builds the paullette configuration from options, environment, and defaults
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -30,28 +30,28 @@ export type ConfigLoaderOverrides = {
 	workingDirectoryPath?: string;
 	/** The largest number of model turns a single request is allowed to take. */
 	maximumTurnCount?: number;
-	/** When false, code-agent never asks the user to confirm a file write or a shell command. */
+	/** When false, paullette never asks the user to confirm a file write or a shell command. */
 	isPermissionPromptEnabled?: boolean;
-	/** When true, code-agent prints the name and the arguments of every tool call. */
+	/** When true, paullette prints the name and the arguments of every tool call. */
 	isToolCallLoggingEnabled?: boolean;
 };
 
 /**
- * Builds the code-agent configuration.
+ * Builds the paullette configuration.
  */
 export class ConfigLoader {
 	/**
-	 * Builds the code-agent configuration from the command line options, the environment variables, and the
+	 * Builds the paullette configuration from the command line options, the environment variables, and the
 	 * defaults, in that order of priority.
 	 *
-	 * The environment variables are `CODE_AGENT_BASE_URL`, `CODE_AGENT_API_KEY`, and `CODE_AGENT_MODEL`. When a
-	 * `CODE_AGENT_` variable is absent, the matching `OPENAI_` variable is used instead, so that an existing
+	 * The environment variables are `PAULLETTE_BASE_URL`, `PAULLETTE_API_KEY`, and `PAULLETTE_MODEL`. When a
+	 * `PAULLETTE_` variable is absent, the matching `OPENAI_` variable is used instead, so that an existing
 	 * OpenAI setup works without any extra step.
 	 *
 	 * @param overrides The values coming from the command line.
-	 * @returns The validated code-agent configuration.
+	 * @returns The validated paullette configuration.
 	 */
-	static load(overrides: ConfigLoaderOverrides = {}): CodeAgentConfig {
+	static load(overrides: ConfigLoaderOverrides = {}): PaulletteConfig {
 		const workingDirectoryPath = Path.resolve(overrides.workingDirectoryPath ?? process.cwd());
 
 		const config = {
@@ -64,7 +64,7 @@ export class ConfigLoader {
 			isToolCallLoggingEnabled: overrides.isToolCallLoggingEnabled ?? true,
 		};
 
-		return codeAgentConfigSchema.parse(config);
+		return paulletteConfigSchema.parse(config);
 	}
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -74,15 +74,15 @@ export class ConfigLoader {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Reads an environment variable, preferring the `CODE_AGENT_` name over the `OPENAI_` name.
+	 * Reads an environment variable, preferring the `PAULLETTE_` name over the `OPENAI_` name.
 	 *
 	 * @param suffix The part of the variable name that follows the prefix, for example `BASE_URL`.
 	 * @returns The value of the variable, or undefined when neither variable is set to a non empty value.
 	 */
 	private static _readEnvironment(suffix: string): string | undefined {
-		const codeAgentValue = process.env[`CODE_AGENT_${suffix}`];
-		if (codeAgentValue !== undefined && codeAgentValue.length > 0) {
-			return codeAgentValue;
+		const paulletteValue = process.env[`PAULLETTE_${suffix}`];
+		if (paulletteValue !== undefined && paulletteValue.length > 0) {
+			return paulletteValue;
 		}
 
 		const openaiValue = process.env[`OPENAI_${suffix}`];

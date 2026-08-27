@@ -28,7 +28,7 @@ describe('InputHistoryStore', () => {
 
 	beforeEach(() => {
 		temporaryFolderPath = TemporaryFolder.make();
-		filePath = Path.join(temporaryFolderPath, '.code-agent', 'input_history.txt');
+		filePath = Path.join(temporaryFolderPath, '.paullette', 'input_history.txt');
 		inputHistoryStore = new InputHistoryStore(filePath);
 	});
 

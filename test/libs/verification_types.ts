@@ -7,7 +7,7 @@
 /**
  * What happened when a verification step ran.
  *
- * `passed` and `failed` both mean the step really ran against the code. `pending` means the part of code-agent the
+ * `passed` and `failed` both mean the step really ran against the code. `pending` means the part of paullette the
  * step checks does not exist yet, so the step could not run at all. A pending step is never a failure, and it is
  * never a pass either: it is work still to do.
  */
@@ -107,21 +107,21 @@ export class VerificationResults {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The shape code-agent prints when it is given the `--list` option. This is the contract the implementation has to
+ * The shape paullette prints when it is given the `--list` option. This is the contract the implementation has to
  * meet, and it is written down here because the verification steps are the only thing that reads it.
  */
 export type ListOutput = {
-	/** The folder code-agent treated as the project root. */
+	/** The folder paullette treated as the project root. */
 	projectRootPath: string;
-	/** The absolute path of the `.code-agent` folder. */
+	/** The absolute path of the `.paullette` folder. */
 	configFolderPath: string;
-	/** The instruction document, or null when `.code-agent/CLAUDE.md` is absent. */
+	/** The instruction document, or null when `.paullette/CLAUDE.md` is absent. */
 	instructions: { filePath: string; characterCount: number } | null;
-	/** Every subagent read from `.code-agent/agents`. */
+	/** Every subagent read from `.paullette/agents`. */
 	agents: Array<{ name: string; description: string; toolNames: string[] | null }>;
-	/** Every slash command read from `.code-agent/commands`. */
+	/** Every slash command read from `.paullette/commands`. */
 	commands: Array<{ name: string; description: string; argumentHint: string | null }>;
-	/** Every skill read from `.code-agent/skills`. */
+	/** Every skill read from `.paullette/skills`. */
 	skills: Array<{ name: string; description: string }>;
 };
 
@@ -132,25 +132,25 @@ export type ListOutput = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The prefix of the line code-agent writes to its standard error on every run, saying what it can currently do.
+ * The prefix of the line paullette writes to its standard error on every run, saying what it can currently do.
  *
  * This exists so that a check can tell a part that is not built yet from a part that is built and wrong. Without
  * it, a check for the memory tools fails while the memory tools are still unwritten, which reads as a bug and
  * sends a reader off debugging code that does not exist. Worse, a check can pass for the wrong reason: the check
  * that a file write is refused passes on its own while there is no file writing tool at all.
  */
-export const CAPABILITY_LINE_PREFIX = 'code-agent-capabilities:';
+export const CAPABILITY_LINE_PREFIX = 'paullette-capabilities:';
 
 /**
- * What code-agent says it can currently do. Written by `src/cli.ts` and read by `CodeAgentRunner`. The two sides
+ * What paullette says it can currently do. Written by `src/cli.ts` and read by `PaulletteRunner`. The two sides
  * are kept in step by hand, because nothing under `test/` may import from `src/`.
  */
-export type CodeAgentCapabilities = {
+export type PaulletteCapabilities = {
 	/** The names of the tools the agent was given, which is empty until the tools are built. */
 	toolNames: string[];
-	/** True once code-agent reads and writes `.code-agent/memory`. */
+	/** True once paullette reads and writes `.paullette/memory`. */
 	hasMemory: boolean;
-	/** True once code-agent saves the conversation to `.code-agent/sessions`. */
+	/** True once paullette saves the conversation to `.paullette/sessions`. */
 	hasSessions: boolean;
 };
 
@@ -161,16 +161,16 @@ export type CodeAgentCapabilities = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The base address of the endpoint the verification steps call. It matches the default of code-agent itself.
+ * The base address of the endpoint the verification steps call. It matches the default of paullette itself.
  */
-export const VERIFICATION_BASE_URL = process.env['CODE_AGENT_BASE_URL'] ?? 'http://127.0.0.1:1234/v1';
+export const VERIFICATION_BASE_URL = process.env['PAULLETTE_BASE_URL'] ?? 'http://127.0.0.1:1234/v1';
 
 /**
- * The model the verification steps call. It matches the default model of code-agent itself.
+ * The model the verification steps call. It matches the default model of paullette itself.
  *
- * These two used to differ: code-agent defaulted to `google/gemma-4-e2b`, which cannot produce the four-field
- * JSON object that `memory_write` takes, so the verification steps called `qwen3.5-4b` instead. code-agent now
- * defaults to `qwen3.5-4b` as well, and the two agree again. Set `CODE_AGENT_MODEL` to check how a different
+ * These two used to differ: paullette defaulted to `google/gemma-4-e2b`, which cannot produce the four-field
+ * JSON object that `memory_write` takes, so the verification steps called `qwen3.5-4b` instead. paullette now
+ * defaults to `qwen3.5-4b` as well, and the two agree again. Set `PAULLETTE_MODEL` to check how a different
  * model copes.
  */
-export const VERIFICATION_MODEL_NAME = process.env['CODE_AGENT_MODEL'] ?? 'qwen3.5-4b';
+export const VERIFICATION_MODEL_NAME = process.env['PAULLETTE_MODEL'] ?? 'qwen3.5-4b';

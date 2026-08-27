@@ -1,10 +1,10 @@
 # Directory Context: `/src/memory`
 
 ## Purpose
-Reads and writes `.code-agent/memory`, which is where code-agent keeps what it was asked to remember between sessions.
+Reads and writes `.paullette/memory`, which is where paullette keeps what it was asked to remember between sessions.
 
 ## Key Exports & Entry Points
-- `memory_store.ts`: `MemoryStore`, built with the path of the `.code-agent/memory` folder. It reads the index, lists, reads, writes, and deletes.
+- `memory_store.ts`: `MemoryStore`, built with the path of the `.paullette/memory` folder. It reads the index, lists, reads, writes, and deletes.
 - `memory_types.ts`: `MemoryEntry`, `MemoryEntryType`, and the Zod schema of the frontmatter of a memory file.
 
 ## Rules
@@ -14,4 +14,4 @@ Reads and writes `.code-agent/memory`, which is where code-agent keeps what it w
 - The name of a fact goes through `MemoryStore.toFileName` before it touches the disk. The model chooses these names, so they cannot be trusted to be safe file names.
 
 ## Background
-- `memory_write` takes four arguments, and a model has to build one JSON object holding all four to call it. `google/gemma-4-e2b` cannot do that: it emits malformed JSON and the call never reaches the tool. That is why code-agent defaults to `qwen3.5-4b`. See the note at the end of `TODO.md`.
+- `memory_write` takes four arguments, and a model has to build one JSON object holding all four to call it. `google/gemma-4-e2b` cannot do that: it emits malformed JSON and the call never reaches the tool. That is why paullette defaults to `qwen3.5-4b`. See the note at the end of `TODO.md`.

@@ -38,7 +38,7 @@ describe('SessionStore', () => {
 
 	beforeEach(() => {
 		temporaryFolderPath = TemporaryFolder.make();
-		sessionsFolderPath = Path.join(temporaryFolderPath, '.code-agent', 'sessions');
+		sessionsFolderPath = Path.join(temporaryFolderPath, '.paullette', 'sessions');
 		sessionStore = new SessionStore(sessionsFolderPath);
 	});
 

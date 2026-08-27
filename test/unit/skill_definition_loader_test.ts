@@ -8,12 +8,12 @@ import { TemporaryFolder } from './libs/temporary_folder.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	skill_definition_loader_test — checks SkillDefinitionLoader reads .code-agent/skills
+//	skill_definition_loader_test — checks SkillDefinitionLoader reads .paullette/skills
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 describe('SkillDefinitionLoader.loadAll', () => {
-	/** The folder each test works inside, standing in for the `.code-agent` folder. */
+	/** The folder each test works inside, standing in for the `.paullette` folder. */
 	let configFolderPath = '';
 
 	beforeEach(() => {

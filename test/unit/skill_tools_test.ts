@@ -22,19 +22,19 @@ const makeSkill = (name: string): SkillDefinition => {
 		name: name,
 		description: `The ${name} skill.`,
 		instructions: `The instructions of ${name}.`,
-		folderPath: `/projects/code-agent/.code-agent/skills/${name}`,
+		folderPath: `/projects/paullette/.paullette/skills/${name}`,
 	};
 };
 
 describe('SkillTools.createAll', () => {
 	test('builds no tool at all when the project has no skills', () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 
 		Assert.deepEqual(SkillTools.createAll(toolContext, []), []);
 	});
 
 	test('names every skill in the description of the tool, so that the model can choose one', () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 
 		const tools = SkillTools.createAll(toolContext, [makeSkill('release-notes'), makeSkill('triage')]);
 
@@ -45,7 +45,7 @@ describe('SkillTools.createAll', () => {
 
 describe('load_skill', () => {
 	test('gives back the instructions of the skill and where its files are', async () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 		const tools = SkillTools.createAll(toolContext, [makeSkill('release-notes')]);
 
 		const result = await ToolHarness.invoke(tools, 'load_skill', {
@@ -53,11 +53,11 @@ describe('load_skill', () => {
 		});
 
 		Assert.ok(result.includes('The instructions of release-notes.'));
-		Assert.ok(result.includes('/projects/code-agent/.code-agent/skills/release-notes'));
+		Assert.ok(result.includes('/projects/paullette/.paullette/skills/release-notes'));
 	});
 
 	test('finds the skill whatever the capitalisation and the spaces around the name', async () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 		const tools = SkillTools.createAll(toolContext, [makeSkill('release-notes')]);
 
 		const result = await ToolHarness.invoke(tools, 'load_skill', {
@@ -68,7 +68,7 @@ describe('load_skill', () => {
 	});
 
 	test('names the skills there are when it is asked for one that does not exist', async () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 		const tools = SkillTools.createAll(toolContext, [makeSkill('release-notes')]);
 
 		const result = await ToolHarness.invoke(tools, 'load_skill', {
@@ -80,7 +80,7 @@ describe('load_skill', () => {
 	});
 
 	test('logs the name of the skill it was asked for', async () => {
-		const harnessedContext = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const harnessedContext = ToolHarness.makeContext('/projects/paullette', 'allowed');
 		const tools = SkillTools.createAll(harnessedContext.toolContext, [makeSkill('release-notes')]);
 
 		await ToolHarness.invoke(tools, 'load_skill', {

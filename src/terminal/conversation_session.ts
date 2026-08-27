@@ -27,7 +27,7 @@ export class ConversationSession {
 	 * Builds the conversation session.
 	 *
 	 * @param sessionStore The store the conversation is written to.
-	 * @param sessionsFolderPath The absolute path of the `.code-agent/sessions` folder.
+	 * @param sessionsFolderPath The absolute path of the `.paullette/sessions` folder.
 	 * @param storedSession The conversation to start from, either newly started or read back from disk.
 	 */
 	constructor(sessionStore: SessionStore, sessionsFolderPath: string, storedSession: StoredSession) {
@@ -55,7 +55,7 @@ export class ConversationSession {
 	 * the conversation to disk.
 	 *
 	 * The conversation is written before the model is called as well as after it answers, so that stopping
-	 * code-agent part way through a turn cannot lose what was already said.
+	 * paullette part way through a turn cannot lose what was already said.
 	 *
 	 * @param agent The agent to run.
 	 * @param promptText The message of the user.

@@ -21,7 +21,7 @@ describe('MemoryTools', () => {
 
 	beforeEach(() => {
 		workingDirectoryPath = TemporaryFolder.make();
-		memoryStore = new MemoryStore(Path.join(workingDirectoryPath, '.code-agent', 'memory'));
+		memoryStore = new MemoryStore(Path.join(workingDirectoryPath, '.paullette', 'memory'));
 	});
 
 	afterEach(() => {

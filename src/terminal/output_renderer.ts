@@ -2,14 +2,14 @@ import Chalk from 'chalk';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	OutputRenderer — everything code-agent prints at the terminal
+//	OutputRenderer — everything paullette prints at the terminal
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Everything code-agent prints at the terminal.
+ * Everything paullette prints at the terminal.
  *
- * The answer of the model goes to the standard output. Everything code-agent says about its own working goes to the
+ * The answer of the model goes to the standard output. Everything paullette says about its own working goes to the
  * standard error, so that a caller reading the standard output gets the answer on its own.
  */
 export class OutputRenderer {
@@ -18,17 +18,17 @@ export class OutputRenderer {
 	 *
 	 * @param modelName The model the conversation will be held with.
 	 * @param baseUrl The endpoint the model is served from.
-	 * @param projectRootPath The folder code-agent is working in.
+	 * @param projectRootPath The folder paullette is working in.
 	 * @returns Nothing.
 	 */
 	static writeBanner(modelName: string, baseUrl: string, projectRootPath: string): void {
-		process.stderr.write(`\n${Chalk.bold('code-agent')} ${Chalk.dim(`${modelName} at ${baseUrl}`)}\n`);
+		process.stderr.write(`\n${Chalk.bold('paullette')} ${Chalk.dim(`${modelName} at ${baseUrl}`)}\n`);
 		process.stderr.write(`${Chalk.dim(projectRootPath)}\n`);
 		process.stderr.write(`${Chalk.dim('Type /help for the commands, /exit to leave.')}\n\n`);
 	}
 
 	/**
-	 * Prints one line about what code-agent is doing, rather than about the answer.
+	 * Prints one line about what paullette is doing, rather than about the answer.
 	 *
 	 * @param text The line to print.
 	 * @returns Nothing.

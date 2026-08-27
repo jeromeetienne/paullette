@@ -12,7 +12,7 @@ import { TemporaryFolder } from './libs/temporary_folder.ts';
 ///////////////////////////////////////////////////////////////////////////////
 
 describe('InstructionLoader.load', () => {
-	/** The folder each test works inside, standing in for the `.code-agent` folder. */
+	/** The folder each test works inside, standing in for the `.paullette` folder. */
 	let configFolderPath = '';
 
 	beforeEach(() => {
@@ -36,24 +36,24 @@ describe('InstructionLoader.load', () => {
 		Assert.equal(instructionDocument?.filePath, Path.join(configFolderPath, 'CLAUDE.md'));
 	});
 
-	test('reads CODE_AGENT.md when there is no CLAUDE.md', () => {
-		TemporaryFolder.writeFile(configFolderPath, 'CODE_AGENT.md', 'Always write tests.\n');
+	test('reads PAULLETTE.md when there is no CLAUDE.md', () => {
+		TemporaryFolder.writeFile(configFolderPath, 'PAULLETTE.md', 'Always write tests.\n');
 
-		Assert.equal(InstructionLoader.load(configFolderPath)?.filePath, Path.join(configFolderPath, 'CODE_AGENT.md'));
+		Assert.equal(InstructionLoader.load(configFolderPath)?.filePath, Path.join(configFolderPath, 'PAULLETTE.md'));
 	});
 
 	test('prefers CLAUDE.md when both files are there', () => {
 		TemporaryFolder.writeFile(configFolderPath, 'CLAUDE.md', 'From CLAUDE.md.');
-		TemporaryFolder.writeFile(configFolderPath, 'CODE_AGENT.md', 'From CODE_AGENT.md.');
+		TemporaryFolder.writeFile(configFolderPath, 'PAULLETTE.md', 'From PAULLETTE.md.');
 
 		Assert.equal(InstructionLoader.load(configFolderPath)?.text, 'From CLAUDE.md.');
 	});
 
-	test('passes over an empty CLAUDE.md and reads CODE_AGENT.md instead', () => {
+	test('passes over an empty CLAUDE.md and reads PAULLETTE.md instead', () => {
 		TemporaryFolder.writeFile(configFolderPath, 'CLAUDE.md', '   \n\n');
-		TemporaryFolder.writeFile(configFolderPath, 'CODE_AGENT.md', 'From CODE_AGENT.md.');
+		TemporaryFolder.writeFile(configFolderPath, 'PAULLETTE.md', 'From PAULLETTE.md.');
 
-		Assert.equal(InstructionLoader.load(configFolderPath)?.text, 'From CODE_AGENT.md.');
+		Assert.equal(InstructionLoader.load(configFolderPath)?.text, 'From PAULLETTE.md.');
 	});
 
 	test('gives nothing when the only instruction document is empty', () => {

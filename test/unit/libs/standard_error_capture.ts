@@ -17,7 +17,7 @@ export type CapturedRun<ResultType> = {
 /**
  * Keeps what a test wrote to the standard error out of the test output, and hands it to the test instead.
  *
- * code-agent writes everything it says about its own working to the standard error. A test of that code has to
+ * paullette writes everything it says about its own working to the standard error. A test of that code has to
  * read what was written, and a reader of the test output should not have to.
  */
 export class StandardErrorCapture {

@@ -7,19 +7,19 @@ import { SkillDefinitionLoader } from './skill_definition_loader.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	ConfigFolderReader — reads everything out of the .code-agent folder at once
+//	ConfigFolderReader — reads everything out of the .paullette folder at once
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Reads everything out of the `.code-agent` folder at once.
+ * Reads everything out of the `.paullette` folder at once.
  */
 export class ConfigFolderReader {
 	/**
-	 * Finds the `.code-agent` folder, makes it when it is absent, and reads everything in it.
+	 * Finds the `.paullette` folder, makes it when it is absent, and reads everything in it.
 	 *
-	 * @param workingDirectoryPath The folder code-agent was started in.
-	 * @returns Everything read out of the `.code-agent` folder.
+	 * @param workingDirectoryPath The folder paullette was started in.
+	 * @returns Everything read out of the `.paullette` folder.
 	 */
 	static read(workingDirectoryPath: string): ConfigFolderContent {
 		const paths = ConfigFolderLocator.locate(workingDirectoryPath);

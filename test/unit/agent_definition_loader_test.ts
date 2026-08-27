@@ -6,12 +6,12 @@ import { TemporaryFolder } from './libs/temporary_folder.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	agent_definition_loader_test — checks AgentDefinitionLoader reads .code-agent/agents
+//	agent_definition_loader_test — checks AgentDefinitionLoader reads .paullette/agents
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 describe('AgentDefinitionLoader.loadAll', () => {
-	/** The folder each test works inside, standing in for the `.code-agent` folder. */
+	/** The folder each test works inside, standing in for the `.paullette` folder. */
 	let configFolderPath = '';
 
 	beforeEach(() => {

@@ -1,7 +1,7 @@
 # Directory Context: `/test/unit`
 
 ## Purpose
-Holds the unit test suite: one test file per source file, each one calling the code in `src/` directly and proving what that one piece does on its own. This is the fast half of the testing. The other half is the verification runner one folder up, which starts code-agent as a separate process and calls a real model.
+Holds the unit test suite: one test file per source file, each one calling the code in `src/` directly and proving what that one piece does on its own. This is the fast half of the testing. The other half is the verification runner one folder up, which starts paullette as a separate process and calls a real model.
 
 ## Key Exports & Entry Points
 - `<source file name>_test.ts`: the tests of `src/**/<source file name>.ts`. A test file is named after the source file it covers, so that the file to open is never in doubt.

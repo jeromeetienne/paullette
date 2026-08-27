@@ -41,7 +41,7 @@ describe('MemoryStore on disk', () => {
 
 	beforeEach(() => {
 		temporaryFolderPath = TemporaryFolder.make();
-		memoryFolderPath = Path.join(temporaryFolderPath, '.code-agent', 'memory');
+		memoryFolderPath = Path.join(temporaryFolderPath, '.paullette', 'memory');
 		memoryStore = new MemoryStore(memoryFolderPath);
 	});
 

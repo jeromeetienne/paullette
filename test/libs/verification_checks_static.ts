@@ -2,7 +2,7 @@ import ChildProcess from 'node:child_process';
 import Fs from 'node:fs';
 import Path from 'node:path';
 
-import { CodeAgentRunner } from './code_agent_runner.ts';
+import { PaulletteRunner } from './paullette_runner.ts';
 import { EndpointProbe } from './endpoint_probe.ts';
 import { VerificationHelpers } from './verification_helpers.ts';
 import {
@@ -78,15 +78,15 @@ export class VerificationChecksStatic {
 	}
 
 	/**
-	 * Starts code-agent in an empty folder and looks at what it created.
+	 * Starts paullette in an empty folder and looks at what it created.
 	 *
-	 * @returns Whether the `.code-agent` folder and its subfolders appeared.
+	 * @returns Whether the `.paullette` folder and its subfolders appeared.
 	 */
 	static async checkFolderCreated(): Promise<VerificationResult> {
-		const folderPath = CodeAgentRunner.makeEmptyFolder();
+		const folderPath = PaulletteRunner.makeEmptyFolder();
 
 		try {
-			const outcome = await CodeAgentRunner.run({
+			const outcome = await PaulletteRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--list'],
 				timeoutMilliseconds: 60000,
@@ -98,11 +98,11 @@ export class VerificationChecksStatic {
 			}
 
 			const wantedPaths = [
-				'.code-agent',
-				'.code-agent/agents',
-				'.code-agent/commands',
-				'.code-agent/skills',
-				'.code-agent/memory',
+				'.paullette',
+				'.paullette/agents',
+				'.paullette/commands',
+				'.paullette/skills',
+				'.paullette/memory',
 			];
 			const missingPaths = wantedPaths.filter((wantedPath) => {
 				return Fs.existsSync(Path.join(folderPath, wantedPath)) === false;
@@ -115,22 +115,22 @@ export class VerificationChecksStatic {
 				);
 			}
 
-			return VerificationResults.passed('.code-agent and its subfolders were created');
+			return VerificationResults.passed('.paullette and its subfolders were created');
 		} finally {
-			CodeAgentRunner.removeFolder(folderPath);
+			PaulletteRunner.removeFolder(folderPath);
 		}
 	}
 
 	/**
-	 * Starts code-agent in the fixture folder and reads back what it loaded.
+	 * Starts paullette in the fixture folder and reads back what it loaded.
 	 *
 	 * @returns Whether the instruction document, the subagent, the command, and the skill were all loaded.
 	 */
 	static async checkFixtureLoaded(): Promise<VerificationResult> {
-		const folderPath = CodeAgentRunner.makeFixtureFolder();
+		const folderPath = PaulletteRunner.makeFixtureFolder();
 
 		try {
-			const outcome = await CodeAgentRunner.run({
+			const outcome = await PaulletteRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--list'],
 				timeoutMilliseconds: 60000,
@@ -169,7 +169,7 @@ export class VerificationChecksStatic {
 
 			return VerificationResults.passed('the instruction document, the subagent, the command, and the skill were loaded');
 		} finally {
-			CodeAgentRunner.removeFolder(folderPath);
+			PaulletteRunner.removeFolder(folderPath);
 		}
 	}
 
@@ -179,10 +179,10 @@ export class VerificationChecksStatic {
 	 * @returns Whether the argument, the shell output, and the file reference were all expanded.
 	 */
 	static async checkCommandExpanded(): Promise<VerificationResult> {
-		const folderPath = CodeAgentRunner.makeFixtureFolder();
+		const folderPath = PaulletteRunner.makeFixtureFolder();
 
 		try {
-			const outcome = await CodeAgentRunner.run({
+			const outcome = await PaulletteRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--yes', '--expand', '/greet World'],
 				timeoutMilliseconds: 60000,
@@ -211,7 +211,7 @@ export class VerificationChecksStatic {
 
 			return VerificationResults.passed('the argument, the shell output, and the file reference were all expanded');
 		} finally {
-			CodeAgentRunner.removeFolder(folderPath);
+			PaulletteRunner.removeFolder(folderPath);
 		}
 	}
 }

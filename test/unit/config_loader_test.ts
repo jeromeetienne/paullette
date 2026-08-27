@@ -21,9 +21,9 @@ import {
  * that the environment of the person running the tests cannot change what a test sees.
  */
 const READ_VARIABLE_NAMES = [
-	'CODE_AGENT_BASE_URL',
-	'CODE_AGENT_API_KEY',
-	'CODE_AGENT_MODEL',
+	'PAULLETTE_BASE_URL',
+	'PAULLETTE_API_KEY',
+	'PAULLETTE_MODEL',
 	'OPENAI_BASE_URL',
 	'OPENAI_API_KEY',
 	'OPENAI_MODEL',
@@ -64,10 +64,10 @@ describe('ConfigLoader.load', () => {
 		Assert.equal(config.isToolCallLoggingEnabled, true);
 	});
 
-	test('reads the CODE_AGENT variables when the command line gives nothing', () => {
-		process.env.CODE_AGENT_BASE_URL = 'http://127.0.0.1:9999/v1';
-		process.env.CODE_AGENT_API_KEY = 'from-the-environment';
-		process.env.CODE_AGENT_MODEL = 'model-from-the-environment';
+	test('reads the PAULLETTE variables when the command line gives nothing', () => {
+		process.env.PAULLETTE_BASE_URL = 'http://127.0.0.1:9999/v1';
+		process.env.PAULLETTE_API_KEY = 'from-the-environment';
+		process.env.PAULLETTE_MODEL = 'model-from-the-environment';
 
 		const config = ConfigLoader.load();
 
@@ -76,7 +76,7 @@ describe('ConfigLoader.load', () => {
 		Assert.equal(config.modelName, 'model-from-the-environment');
 	});
 
-	test('reads the OPENAI variables when the CODE_AGENT variables are absent', () => {
+	test('reads the OPENAI variables when the PAULLETTE variables are absent', () => {
 		process.env.OPENAI_BASE_URL = 'https://api.openai.com/v1';
 		process.env.OPENAI_API_KEY = 'an-openai-key';
 		process.env.OPENAI_MODEL = 'an-openai-model';
@@ -88,22 +88,22 @@ describe('ConfigLoader.load', () => {
 		Assert.equal(config.modelName, 'an-openai-model');
 	});
 
-	test('prefers a CODE_AGENT variable over the matching OPENAI variable', () => {
-		process.env.CODE_AGENT_MODEL = 'the-code-agent-model';
+	test('prefers a PAULLETTE variable over the matching OPENAI variable', () => {
+		process.env.PAULLETTE_MODEL = 'the-paullette-model';
 		process.env.OPENAI_MODEL = 'the-openai-model';
 
-		Assert.equal(ConfigLoader.load().modelName, 'the-code-agent-model');
+		Assert.equal(ConfigLoader.load().modelName, 'the-paullette-model');
 	});
 
 	test('treats a variable set to an empty value as absent', () => {
-		process.env.CODE_AGENT_MODEL = '';
+		process.env.PAULLETTE_MODEL = '';
 		process.env.OPENAI_MODEL = 'the-openai-model';
 
 		Assert.equal(ConfigLoader.load().modelName, 'the-openai-model');
 	});
 
 	test('prefers the command line over both the environment and the defaults', () => {
-		process.env.CODE_AGENT_MODEL = 'the-environment-model';
+		process.env.PAULLETTE_MODEL = 'the-environment-model';
 
 		const config = ConfigLoader.load({
 			modelName: 'the-command-line-model',

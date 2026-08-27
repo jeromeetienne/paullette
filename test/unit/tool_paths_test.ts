@@ -14,7 +14,7 @@ import { MAXIMUM_TOOL_OUTPUT_CHARACTER_COUNT } from '../../src/tools/tool_types.
 /**
  * A working folder that does not need to exist, because every method under test works on the text of a path.
  */
-const WORKING_DIRECTORY_PATH = Path.resolve('/tmp/code-agent-working-folder');
+const WORKING_DIRECTORY_PATH = Path.resolve('/tmp/paullette-working-folder');
 
 describe('ToolPaths.resolveInside', () => {
 	test('turns a relative path into an absolute path inside the working folder', () => {

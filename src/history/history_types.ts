@@ -16,10 +16,10 @@ import { type RunResult } from '@openai/agents';
 export type ConversationHistoryItem = InstanceType<typeof RunResult>['history'][number];
 
 /**
- * A whole conversation as it is written to `.code-agent/sessions`.
+ * A whole conversation as it is written to `.paullette/sessions`.
  *
  * This is plain readable JSON on purpose. A person should be able to open a session file, see what was said, and
- * delete it, without code-agent being involved.
+ * delete it, without paullette being involved.
  */
 export type StoredSession = {
 	/** The name of the session, which is also the name of its file without the extension. */

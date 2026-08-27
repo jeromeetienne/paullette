@@ -6,22 +6,22 @@ import { FrontmatterParser } from './frontmatter_parser.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	CommandDefinitionLoader — reads the slash commands out of .code-agent/commands
+//	CommandDefinitionLoader — reads the slash commands out of .paullette/commands
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Reads the slash commands out of `.code-agent/commands`.
+ * Reads the slash commands out of `.paullette/commands`.
  */
 export class CommandDefinitionLoader {
 	/**
 	 * Reads every slash command definition, including the ones in subfolders.
 	 *
 	 * A command in a subfolder is named after its path with a colon between the parts, so
-	 * `commands/git/commit.md` is typed as `/git:commit`. That is how Claude Code names them, and a `.code-agent`
+	 * `commands/git/commit.md` is typed as `/git:commit`. That is how Claude Code names them, and a `.paullette`
 	 * folder is most often a copy of a `.claude` folder.
 	 *
-	 * @param configFolderPath The absolute path of the `.code-agent` folder.
+	 * @param configFolderPath The absolute path of the `.paullette` folder.
 	 * @returns Every slash command definition, with the name of a command appearing at most once.
 	 */
 	static loadAll(configFolderPath: string): CommandDefinition[] {

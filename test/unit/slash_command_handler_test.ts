@@ -59,7 +59,7 @@ describe('SlashCommandHandler.handle', () => {
 	let slashCommandHandler: SlashCommandHandler;
 
 	/**
-	 * Reads the `.code-agent` folder as it stands now and builds a handler on top of it.
+	 * Reads the `.paullette` folder as it stands now and builds a handler on top of it.
 	 *
 	 * A test that adds a file to the folder calls this again, because the handler is given everything that was
 	 * read once and never reads the folder a second time.
@@ -87,8 +87,8 @@ describe('SlashCommandHandler.handle', () => {
 
 	beforeEach(() => {
 		projectFolderPath = TemporaryFolder.make();
-		TemporaryFolder.writeFile(projectFolderPath, '.code-agent/commands/review.md', 'Review $ARGUMENTS.\n');
-		TemporaryFolder.writeFile(projectFolderPath, '.code-agent/agents/reviewer.md', 'Review the diff.\n');
+		TemporaryFolder.writeFile(projectFolderPath, '.paullette/commands/review.md', 'Review $ARGUMENTS.\n');
+		TemporaryFolder.writeFile(projectFolderPath, '.paullette/agents/reviewer.md', 'Review the diff.\n');
 		buildHandler();
 	});
 
@@ -171,8 +171,8 @@ describe('SlashCommandHandler.handle', () => {
 		Assert.ok(captured.standardErrorText.includes('There is no command called /never-written'));
 	});
 
-	test('answers a command code-agent knows itself even when the folder holds one of the same name', async () => {
-		TemporaryFolder.writeFile(projectFolderPath, '.code-agent/commands/help.md', 'This must never be sent.\n');
+	test('answers a command paullette knows itself even when the folder holds one of the same name', async () => {
+		TemporaryFolder.writeFile(projectFolderPath, '.paullette/commands/help.md', 'This must never be sent.\n');
 		buildHandler();
 
 		const captured = await handle('/help');

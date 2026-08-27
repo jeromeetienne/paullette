@@ -2,7 +2,7 @@ import { Agent } from '@openai/agents';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	AgentBuilder — builds the agent code-agent runs
+//	AgentBuilder — builds the agent paullette runs
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -19,7 +19,7 @@ export type AgentBuildRequest = {
 };
 
 /**
- * Builds the agent code-agent runs.
+ * Builds the agent paullette runs.
  */
 export class AgentBuilder {
 	/**
@@ -33,7 +33,7 @@ export class AgentBuilder {
 	 */
 	static build(request: AgentBuildRequest): Agent {
 		return new Agent({
-			name: 'code-agent',
+			name: 'paullette',
 			instructions: request.systemPrompt,
 			model: request.modelName,
 			tools: request.tools,

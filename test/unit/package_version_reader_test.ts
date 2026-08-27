@@ -8,12 +8,12 @@ import { TemporaryFolder } from './libs/temporary_folder.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	package_version_reader_test — checks PackageVersionReader reads the version of code-agent
+//	package_version_reader_test — checks PackageVersionReader reads the version of paullette
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 describe('PackageVersionReader.read', () => {
-	test('reads the version the package.json of code-agent holds', () => {
+	test('reads the version the package.json of paullette holds', () => {
 		const filePath = Path.join(import.meta.dirname, '..', '..', 'package.json');
 		const packageJson = JSON.parse(Fs.readFileSync(filePath, 'utf8'));
 
@@ -84,7 +84,7 @@ describe('PackageVersionReader.readVersionFrom', () => {
 
 	test('gives the unknown version when there is no version field', () => {
 		const fileText = JSON.stringify({
-			name: 'code-agent',
+			name: 'paullette',
 		});
 		const filePath = TemporaryFolder.writeFile(temporaryFolderPath, 'package.json', fileText);
 

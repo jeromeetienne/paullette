@@ -6,7 +6,7 @@ import { FrontmatterParser } from './frontmatter_parser.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	SkillDefinitionLoader — reads the skills out of .code-agent/skills
+//	SkillDefinitionLoader — reads the skills out of .paullette/skills
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -16,13 +16,13 @@ import { FrontmatterParser } from './frontmatter_parser.ts';
 const SKILL_FILE_NAME = 'SKILL.md';
 
 /**
- * Reads the skills out of `.code-agent/skills`.
+ * Reads the skills out of `.paullette/skills`.
  */
 export class SkillDefinitionLoader {
 	/**
 	 * Reads every skill definition. Each skill is a folder holding a `SKILL.md`.
 	 *
-	 * @param configFolderPath The absolute path of the `.code-agent` folder.
+	 * @param configFolderPath The absolute path of the `.paullette` folder.
 	 * @returns Every skill definition, with the name of a skill appearing at most once.
 	 */
 	static loadAll(configFolderPath: string): SkillDefinition[] {

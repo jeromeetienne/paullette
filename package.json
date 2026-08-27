@@ -44,11 +44,11 @@
 	],
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/jeromeetienne/code-agent.git"
+		"url": "git+https://github.com/jeromeetienne/paullette.git"
 	},
-	"homepage": "https://github.com/jeromeetienne/code-agent#readme",
+	"homepage": "https://github.com/jeromeetienne/paullette#readme",
 	"bugs": {
-		"url": "https://github.com/jeromeetienne/code-agent/issues"
+		"url": "https://github.com/jeromeetienne/paullette/issues"
 	},
 	"keywords": [
 		"ai",

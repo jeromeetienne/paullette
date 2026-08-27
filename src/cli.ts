@@ -14,7 +14,7 @@ import { ReadlineInterface } from './terminal/readline_interface.ts';
 import { SlashCommandHandler } from './terminal/slash_command_handler.ts';
 import { ConfigLoader } from './config_runtime/config_loader.ts';
 import { PackageVersionReader } from './config_runtime/package_version_reader.ts';
-import { type CodeAgentConfig } from './config_runtime/config_types.ts';
+import { type PaulletteConfig } from './config_runtime/config_types.ts';
 import { ConfigFolderReader } from './config_folder/config_folder_reader.ts';
 import { type ConfigFolderContent } from './config_folder/config_folder_types.ts';
 import { InputHistoryStore } from './history/input_history_store.ts';
@@ -28,17 +28,17 @@ import { type ToolContext } from './tools/tool_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	Main — the command line entry point of code-agent
+//	Main — the command line entry point of paullette
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The options code-agent accepts on the command line.
+ * The options paullette accepts on the command line.
  */
 type CommandLineOptions = {
 	/** The prompt to answer in one turn before exiting, when the one-shot mode was asked for. */
 	print?: string;
-	/** True to print what was read out of the `.code-agent` folder as JSON and exit. */
+	/** True to print what was read out of the `.paullette` folder as JSON and exit. */
 	list?: boolean;
 	/** The slash command to expand and print without calling the model, for example `/greet World`. */
 	expand?: string;
@@ -60,9 +60,9 @@ type CommandLineOptions = {
  * Everything built at startup and used by whichever mode was asked for.
  */
 type StartedSession = {
-	/** The configuration code-agent is running with. */
-	config: CodeAgentConfig;
-	/** Everything read out of the `.code-agent` folder. */
+	/** The configuration paullette is running with. */
+	config: PaulletteConfig;
+	/** Everything read out of the `.paullette` folder. */
 	content: ConfigFolderContent;
 	/** The working folder, the permission asker, and the tool call logger. */
 	toolContext: ToolContext;
@@ -83,7 +83,7 @@ type StartedSession = {
 };
 
 /**
- * The command line entry point of code-agent.
+ * The command line entry point of paullette.
  */
 class Main {
 	/**
@@ -95,13 +95,13 @@ class Main {
 	static async main(processArgv: string[]): Promise<void> {
 		const program = new Command();
 		program
-			.name('code-agent')
-			.description('A coding agent that reads a .code-agent folder and runs on any OpenAI API compatible endpoint')
-			.version(PackageVersionReader.read(), '-V, --version', 'print the version of code-agent and exit')
+			.name('paullette')
+			.description('A coding agent that reads a .paullette folder and runs on any OpenAI API compatible endpoint')
+			.version(PackageVersionReader.read(), '-V, --version', 'print the version of paullette and exit')
 			.option('--print <prompt>', 'answer one prompt and exit, printing the answer to the standard output')
-			.option('--list', 'print what was read out of the .code-agent folder as JSON, and exit')
+			.option('--list', 'print what was read out of the .paullette folder as JSON, and exit')
 			.option('--expand <command>', 'print the expanded text of a slash command without calling the model')
-			.option('--resume', 'carry on the newest conversation in .code-agent/sessions instead of starting a new one')
+			.option('--resume', 'carry on the newest conversation in .paullette/sessions instead of starting a new one')
 			.option('--yes', 'approve every permission request instead of asking')
 			.option('--model <name>', 'the identifier of the model to use')
 			.option('--base-url <address>', 'the base address of the OpenAI API compatible endpoint')
@@ -141,7 +141,7 @@ class Main {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Builds the configuration, reads the `.code-agent` folder, and assembles everything the modes share.
+	 * Builds the configuration, reads the `.paullette` folder, and assembles everything the modes share.
 	 *
 	 * @param options What was given on the command line.
 	 * @returns Everything the chosen mode needs.
@@ -165,7 +165,7 @@ class Main {
 			permissionAsker: permissionPrompt,
 			logToolCall: (toolName, summary) => {
 				if (config.isToolCallLoggingEnabled === true) {
-					process.stderr.write(`code-agent-tool: ${toolName} ${summary}\n`);
+					process.stderr.write(`paullette-tool: ${toolName} ${summary}\n`);
 				}
 			},
 		};
@@ -231,7 +231,7 @@ class Main {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Prints what was read out of the `.code-agent` folder as JSON, and returns.
+	 * Prints what was read out of the `.paullette` folder as JSON, and returns.
 	 *
 	 * The shape printed here is the contract the verification runner reads. It is typed as `ListOutput` in
 	 * `test/libs/verification_types.ts`, which cannot import from here.
@@ -292,7 +292,7 @@ class Main {
 			return;
 		}
 
-		process.stderr.write('That command is answered by code-agent itself, so it expands to nothing.\n');
+		process.stderr.write('That command is answered by paullette itself, so it expands to nothing.\n');
 		process.exitCode = 1;
 	}
 
@@ -300,7 +300,7 @@ class Main {
 	 * Answers one prompt and returns.
 	 *
 	 * The answer goes to the standard output and nothing else does, so that a caller reading the standard output
-	 * gets the answer on its own. Anything code-agent has to say about its own working goes to the standard error.
+	 * gets the answer on its own. Anything paullette has to say about its own working goes to the standard error.
 	 *
 	 * @param session Everything built at startup.
 	 * @param prompt The prompt to answer.
@@ -317,7 +317,7 @@ class Main {
 			process.stdout.write('\n');
 		} catch (caughtError) {
 			const reason = caughtError instanceof Error ? caughtError.message : String(caughtError);
-			process.stderr.write(`code-agent could not answer: ${reason}\n`);
+			process.stderr.write(`paullette could not answer: ${reason}\n`);
 			process.exitCode = 1;
 		}
 	}
@@ -357,7 +357,7 @@ class Main {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Makes the interrupt key end code-agent without losing the conversation, when there is no interactive loop to
+	 * Makes the interrupt key end paullette without losing the conversation, when there is no interactive loop to
 	 * handle it. The interactive loop handles its own, so that a first press can warn and a second can leave.
 	 *
 	 * Nothing has to be written here, because the conversation is written to disk before the model is called
@@ -369,17 +369,17 @@ class Main {
 	private static _installInterruptHandler(session: StartedSession): void {
 		process.on('SIGINT', () => {
 			OutputRenderer.writeNotice(
-				`\ncode-agent stopped. The conversation so far is in ${session.conversationSession.sessionFilePath}`,
+				`\npaullette stopped. The conversation so far is in ${session.conversationSession.sessionFilePath}`,
 			);
 			process.exit(130);
 		});
 	}
 
 	/**
-	 * Writes one line to the standard error saying what code-agent can currently do.
+	 * Writes one line to the standard error saying what paullette can currently do.
 	 *
 	 * The verification runner reads this line to tell a part that is not built yet from a part that is built and
-	 * wrong. Keep the shape in step with the `CodeAgentCapabilities` type in `test/libs/verification_types.ts`,
+	 * wrong. Keep the shape in step with the `PaulletteCapabilities` type in `test/libs/verification_types.ts`,
 	 * which cannot import from here.
 	 *
 	 * @param session Everything built at startup.
@@ -391,7 +391,7 @@ class Main {
 			hasMemory: true,
 			hasSessions: true,
 		};
-		process.stderr.write(`code-agent-capabilities: ${JSON.stringify(capabilities)}\n`);
+		process.stderr.write(`paullette-capabilities: ${JSON.stringify(capabilities)}\n`);
 	}
 }
 

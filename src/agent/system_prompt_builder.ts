@@ -8,16 +8,16 @@ import { type InstructionDocument, type SkillDefinition } from '../config_folder
 
 /**
  * Everything that goes into the system prompt. Every field except the working directory may be empty, which is
- * what a project with no `.code-agent` content looks like.
+ * what a project with no `.paullette` content looks like.
  */
 export type SystemPromptParts = {
 	/** The folder the agent reads files from and runs shell commands in. */
 	workingDirectoryPath: string;
-	/** The instruction document read from `.code-agent/CLAUDE.md`, or null when there is none. */
+	/** The instruction document read from `.paullette/CLAUDE.md`, or null when there is none. */
 	instructionDocument: InstructionDocument | null;
 	/** Every skill that was loaded. Only the name and the description of each one reach the prompt. */
 	skillDefinitions: SkillDefinition[];
-	/** The text of `.code-agent/memory/MEMORY.md`, or null when nothing has been remembered yet. */
+	/** The text of `.paullette/memory/MEMORY.md`, or null when nothing has been remembered yet. */
 	memoryIndexText: string | null;
 	/** True when the memory tools are there, which is what tells the agent it can remember things at all. */
 	isMemoryAvailable: boolean;
@@ -42,7 +42,7 @@ export class SystemPromptBuilder {
 
 		sections.push(
 			[
-				'You are code-agent, a coding assistant working on the command line.',
+				'You are paullette, a coding assistant working on the command line.',
 				'',
 				`The working folder is ${parts.workingDirectoryPath}. Every relative path is read from there.`,
 				'',

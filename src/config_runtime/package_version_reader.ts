@@ -3,7 +3,7 @@ import Path from 'node:path';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	PackageVersionReader — reads the version of code-agent out of its own package.json
+//	PackageVersionReader — reads the version of paullette out of its own package.json
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -16,16 +16,16 @@ const __dirname = import.meta.dirname;
 export const UNKNOWN_VERSION = 'unknown';
 
 /**
- * Reads the version of code-agent out of the `package.json` of code-agent itself.
+ * Reads the version of paullette out of the `package.json` of paullette itself.
  */
 export class PackageVersionReader {
 	/**
-	 * Reads the version of code-agent.
+	 * Reads the version of paullette.
 	 *
 	 * The `package.json` is found by walking up from the folder holding this file, so that the version is the
-	 * same whether code-agent runs from the TypeScript source in `src` or from the built JavaScript in `dist`.
+	 * same whether paullette runs from the TypeScript source in `src` or from the built JavaScript in `dist`.
 	 *
-	 * @returns The `version` field of the `package.json` of code-agent, or `unknown` when it cannot be read.
+	 * @returns The `version` field of the `package.json` of paullette, or `unknown` when it cannot be read.
 	 */
 	static read(): string {
 		const filePath = PackageVersionReader.findPackageJsonFilePath(__dirname);
@@ -64,7 +64,7 @@ export class PackageVersionReader {
 	 * Reads the `version` field out of one `package.json`.
 	 *
 	 * A `package.json` that cannot be read, cannot be parsed, or holds no `version` field gives `unknown` rather
-	 * than an error, because printing the version must never stop code-agent from starting.
+	 * than an error, because printing the version must never stop paullette from starting.
 	 *
 	 * @param filePath The path of the `package.json` to read.
 	 * @returns The `version` field, or `unknown` when there is none to read.

@@ -60,6 +60,6 @@ export class ToolPaths {
 
 		const keptText = text.slice(0, MAXIMUM_TOOL_OUTPUT_CHARACTER_COUNT);
 		const droppedCount = text.length - MAXIMUM_TOOL_OUTPUT_CHARACTER_COUNT;
-		return `${keptText}\n\n[code-agent cut this result short: ${droppedCount} more characters were not shown]`;
+		return `${keptText}\n\n[paullette cut this result short: ${droppedCount} more characters were not shown]`;
 	}
 }

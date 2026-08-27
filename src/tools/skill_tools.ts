@@ -22,7 +22,7 @@ export class SkillTools {
 	 * Builds the skill tool, or nothing at all when the project has no skills.
 	 *
 	 * @param context The working folder, the permission asker, and the tool call logger.
-	 * @param skillDefinitions Every skill read out of the `.code-agent` folder.
+	 * @param skillDefinitions Every skill read out of the `.paullette` folder.
 	 * @returns The skill tools, which is an empty list when there are no skills.
 	 */
 	static createAll(context: ToolContext, skillDefinitions: SkillDefinition[]) {
@@ -43,7 +43,7 @@ export class SkillTools {
 	 * Builds the tool that returns the instructions of one skill.
 	 *
 	 * @param context The working folder, the permission asker, and the tool call logger.
-	 * @param skillDefinitions Every skill read out of the `.code-agent` folder.
+	 * @param skillDefinitions Every skill read out of the `.paullette` folder.
 	 * @returns The tool.
 	 */
 	private static _createLoadSkill(context: ToolContext, skillDefinitions: SkillDefinition[]) {

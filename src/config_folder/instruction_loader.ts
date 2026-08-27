@@ -5,24 +5,24 @@ import { type InstructionDocument } from './config_folder_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	InstructionLoader — reads the instruction document out of the .code-agent folder
+//	InstructionLoader — reads the instruction document out of the .paullette folder
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The names looked for, in order. `CLAUDE.md` comes first because a `.code-agent` folder is most often a copy of a
- * `.claude` folder, and `CODE_AGENT.md` is accepted for a project that would rather not carry the other name.
+ * The names looked for, in order. `CLAUDE.md` comes first because a `.paullette` folder is most often a copy of a
+ * `.claude` folder, and `PAULLETTE.md` is accepted for a project that would rather not carry the other name.
  */
-const INSTRUCTION_FILE_NAMES = ['CLAUDE.md', 'CODE_AGENT.md'];
+const INSTRUCTION_FILE_NAMES = ['CLAUDE.md', 'PAULLETTE.md'];
 
 /**
- * Reads the instruction document out of the `.code-agent` folder.
+ * Reads the instruction document out of the `.paullette` folder.
  */
 export class InstructionLoader {
 	/**
 	 * Reads the instruction document.
 	 *
-	 * @param configFolderPath The absolute path of the `.code-agent` folder.
+	 * @param configFolderPath The absolute path of the `.paullette` folder.
 	 * @returns The instruction document, or null when there is none.
 	 */
 	static load(configFolderPath: string): InstructionDocument | null {

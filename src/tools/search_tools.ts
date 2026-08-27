@@ -87,7 +87,7 @@ export class SearchTools {
 
 					const countNote =
 						matchedPaths.length >= MAXIMUM_MATCH_COUNT
-							? `\n\n[code-agent stopped at the first ${MAXIMUM_MATCH_COUNT} matches]`
+							? `\n\n[paullette stopped at the first ${MAXIMUM_MATCH_COUNT} matches]`
 							: '';
 					return ToolPaths.capOutput(matchedPaths.sort().join('\n') + countNote);
 				} catch (caughtError) {

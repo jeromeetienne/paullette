@@ -14,7 +14,7 @@ dist/
 # working on this repository, not anything the project itself needs to build or to run.
 .claude/
 
-# The working folder code-agent creates for itself in this repository. It holds local sessions,
+# The working folder paullette creates for itself in this repository. It holds local sessions,
 # input history, and memory, none of which belong to the project. The committed fixture folder
-# lives at test/fixture/.code-agent instead.
-.code-agent/
+# lives at test/fixture/.paullette instead.
+.paullette/

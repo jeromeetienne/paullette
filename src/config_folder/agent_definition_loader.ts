@@ -6,21 +6,21 @@ import { FrontmatterParser } from './frontmatter_parser.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	AgentDefinitionLoader — reads the subagents out of .code-agent/agents
+//	AgentDefinitionLoader — reads the subagents out of .paullette/agents
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Reads the subagents out of `.code-agent/agents`.
+ * Reads the subagents out of `.paullette/agents`.
  */
 export class AgentDefinitionLoader {
 	/**
 	 * Reads every subagent definition.
 	 *
 	 * A file whose frontmatter cannot be understood is skipped rather than throwing, because one bad file in a
-	 * folder copied from another project must not stop code-agent from starting.
+	 * folder copied from another project must not stop paullette from starting.
 	 *
-	 * @param configFolderPath The absolute path of the `.code-agent` folder.
+	 * @param configFolderPath The absolute path of the `.paullette` folder.
 	 * @returns Every subagent definition, with the name of a subagent appearing at most once.
 	 */
 	static loadAll(configFolderPath: string): AgentDefinition[] {

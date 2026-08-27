@@ -35,7 +35,7 @@ export type ParsedSlashCommand = {
 };
 
 /**
- * The commands code-agent answers itself. A command read from `.code-agent/commands` never takes one of these names.
+ * The commands paullette answers itself. A command read from `.paullette/commands` never takes one of these names.
  */
 const BUILT_IN_NAMES = ['help', 'exit', 'quit', 'clear', 'agents', 'skills', 'commands', 'memory'];
 
@@ -43,7 +43,7 @@ const BUILT_IN_NAMES = ['help', 'exit', 'quit', 'clear', 'agents', 'skills', 'co
  * Deals with a line the user typed that starts with a slash.
  */
 export class SlashCommandHandler {
-	/** Everything read out of the `.code-agent` folder. */
+	/** Everything read out of the `.paullette` folder. */
 	private readonly _content: ConfigFolderContent;
 	/** The working folder, the permission asker, and the tool call logger. */
 	private readonly _toolContext: ToolContext;
@@ -57,7 +57,7 @@ export class SlashCommandHandler {
 	/**
 	 * Builds the slash command handler.
 	 *
-	 * @param content Everything read out of the `.code-agent` folder.
+	 * @param content Everything read out of the `.paullette` folder.
 	 * @param toolContext The working folder, the permission asker, and the tool call logger.
 	 * @param memoryStore The store holding everything remembered about this project.
 	 * @param conversationSession The conversation being held.
@@ -148,7 +148,7 @@ export class SlashCommandHandler {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Deals with one of the commands code-agent answers itself.
+	 * Deals with one of the commands paullette answers itself.
 	 *
 	 * @param parsed The name and the arguments of the command.
 	 * @returns What the command line loop should do next.
@@ -179,7 +179,7 @@ export class SlashCommandHandler {
 			OutputRenderer.writeList(
 				'Subagents',
 				this._content.agentDefinitions.map((definition) => `${definition.name} — ${definition.description}`),
-				'None. Put one in .code-agent/agents to add one.',
+				'None. Put one in .paullette/agents to add one.',
 			);
 			return {
 				kind: 'handled',
@@ -190,7 +190,7 @@ export class SlashCommandHandler {
 			OutputRenderer.writeList(
 				'Skills',
 				this._content.skillDefinitions.map((definition) => `${definition.name} — ${definition.description}`),
-				'None. Put one in .code-agent/skills to add one.',
+				'None. Put one in .paullette/skills to add one.',
 			);
 			return {
 				kind: 'handled',
@@ -215,7 +215,7 @@ export class SlashCommandHandler {
 	}
 
 	/**
-	 * Prints the commands code-agent answers itself and the commands read from the `.code-agent` folder.
+	 * Prints the commands paullette answers itself and the commands read from the `.paullette` folder.
 	 *
 	 * @returns Nothing.
 	 */
@@ -234,12 +234,12 @@ export class SlashCommandHandler {
 		);
 
 		OutputRenderer.writeList(
-			'Commands from .code-agent/commands',
+			'Commands from .paullette/commands',
 			this._content.commandDefinitions.map((definition) => {
 				const hint = definition.argumentHint === undefined ? '' : ` ${definition.argumentHint}`;
 				return `/${definition.name}${hint} — ${definition.description}`;
 			}),
-			'None. Put one in .code-agent/commands to add one.',
+			'None. Put one in .paullette/commands to add one.',
 		);
 	}
 }

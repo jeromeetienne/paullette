@@ -12,7 +12,7 @@ import Path from 'node:path';
  * The first part of the name of every folder made here, so that a folder left behind by a test that was killed
  * can be recognised and removed by hand.
  */
-const FOLDER_NAME_PREFIX = 'code-agent-unit-';
+const FOLDER_NAME_PREFIX = 'paullette-unit-';
 
 /**
  * Every folder path this class has made. `remove` refuses a path that is not in this set.

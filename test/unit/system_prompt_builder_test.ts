@@ -11,14 +11,14 @@ import { SystemPromptBuilder, type SystemPromptParts } from '../../src/agent/sys
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The parts of a project that has no `.code-agent` content at all.
+ * The parts of a project that has no `.paullette` content at all.
  *
  * @param overrides The parts to change.
  * @returns The parts to build a system prompt from.
  */
 const makeParts = (overrides: Partial<SystemPromptParts> = {}): SystemPromptParts => {
 	return {
-		workingDirectoryPath: '/projects/code-agent',
+		workingDirectoryPath: '/projects/paullette',
 		instructionDocument: null,
 		skillDefinitions: [],
 		memoryIndexText: null,
@@ -39,7 +39,7 @@ const makeSkill = (name: string, description: string): SkillDefinition => {
 		name: name,
 		description: description,
 		instructions: 'The instructions of the skill, which must never reach the system prompt.',
-		folderPath: `/projects/code-agent/.code-agent/skills/${name}`,
+		folderPath: `/projects/paullette/.paullette/skills/${name}`,
 	};
 };
 
@@ -47,7 +47,7 @@ describe('SystemPromptBuilder.build', () => {
 	test('always names the working folder', () => {
 		const prompt = SystemPromptBuilder.build(makeParts());
 
-		Assert.ok(prompt.includes('/projects/code-agent'));
+		Assert.ok(prompt.includes('/projects/paullette'));
 	});
 
 	test('leaves out every optional section when there is nothing to put in it', () => {
@@ -62,14 +62,14 @@ describe('SystemPromptBuilder.build', () => {
 		const prompt = SystemPromptBuilder.build(
 			makeParts({
 				instructionDocument: {
-					filePath: '/projects/code-agent/.code-agent/CLAUDE.md',
+					filePath: '/projects/paullette/.paullette/CLAUDE.md',
 					text: 'Always write tests.',
 				},
 			}),
 		);
 
 		Assert.ok(prompt.includes('# Project instructions'));
-		Assert.ok(prompt.includes('/projects/code-agent/.code-agent/CLAUDE.md'));
+		Assert.ok(prompt.includes('/projects/paullette/.paullette/CLAUDE.md'));
 		Assert.ok(prompt.includes('Always write tests.'));
 	});
 

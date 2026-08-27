@@ -1,7 +1,7 @@
 import { setDefaultOpenAIClient, setOpenAIAPI, setTracingDisabled } from '@openai/agents';
 import OpenAI from 'openai';
 
-import { type CodeAgentConfig } from '../config_runtime/config_types.ts';
+import { type PaulletteConfig } from '../config_runtime/config_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -26,7 +26,7 @@ export class ModelProvider {
 	 * @param config The configuration holding the base address and the key of the endpoint.
 	 * @returns Nothing.
 	 */
-	static configure(config: CodeAgentConfig): void {
+	static configure(config: PaulletteConfig): void {
 		const openaiClient = new OpenAI({
 			baseURL: config.baseUrl,
 			apiKey: config.apiKey,

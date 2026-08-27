@@ -22,7 +22,7 @@ const readNames = (tools: ReturnType<typeof ToolRegistry.createAll>): string[] =
 
 describe('ToolRegistry.createAll', () => {
 	test('builds every file tool, every search tool, and the shell tool', () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 
 		Assert.deepEqual(readNames(ToolRegistry.createAll(toolContext)).sort(), [
 			'edit_file',
@@ -38,14 +38,14 @@ describe('ToolRegistry.createAll', () => {
 
 describe('ToolRegistry.filterByName', () => {
 	test('gives back every tool when the subagent asked for nothing in particular', () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 		const tools = ToolRegistry.createAll(toolContext);
 
 		Assert.equal(ToolRegistry.filterByName(tools, undefined).length, tools.length);
 	});
 
 	test('keeps only the tools the subagent asked for', () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 		const tools = ToolRegistry.createAll(toolContext);
 
 		const keptTools = ToolRegistry.filterByName(tools, ['read_file', 'glob_files']);
@@ -54,21 +54,21 @@ describe('ToolRegistry.filterByName', () => {
 	});
 
 	test('matches a name whatever its capitalisation', () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 		const tools = ToolRegistry.createAll(toolContext);
 
 		Assert.deepEqual(readNames(ToolRegistry.filterByName(tools, ['Read_File'])), ['read_file']);
 	});
 
-	test('passes over a name code-agent does not have rather than refusing the whole subagent', () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+	test('passes over a name paullette does not have rather than refusing the whole subagent', () => {
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 		const tools = ToolRegistry.createAll(toolContext);
 
 		Assert.deepEqual(readNames(ToolRegistry.filterByName(tools, ['read_file', 'WebFetch'])), ['read_file']);
 	});
 
 	test('gives back nothing when the subagent asked for an empty list', () => {
-		const { toolContext } = ToolHarness.makeContext('/projects/code-agent', 'allowed');
+		const { toolContext } = ToolHarness.makeContext('/projects/paullette', 'allowed');
 		const tools = ToolRegistry.createAll(toolContext);
 
 		Assert.deepEqual(ToolRegistry.filterByName(tools, []), []);

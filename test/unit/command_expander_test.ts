@@ -24,7 +24,7 @@ const makeCommand = (promptTemplate: string): CommandDefinition => {
 		description: 'The review command.',
 		argumentHint: undefined,
 		promptTemplate: promptTemplate,
-		filePath: '/projects/code-agent/.code-agent/commands/review.md',
+		filePath: '/projects/paullette/.paullette/commands/review.md',
 	};
 };
 
