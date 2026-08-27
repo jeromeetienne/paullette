@@ -3,6 +3,8 @@ import Fs from 'node:fs';
 import Os from 'node:os';
 import Path from 'node:path';
 
+import { CAPABILITY_LINE_PREFIX, type DoublureCapabilities } from './verification_types.ts';
+
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
 
@@ -43,6 +45,8 @@ export type RunOutcome = {
 	isTimedOut: boolean;
 	/** The folder doublure ran in, so that a step can look at the files it left behind. */
 	workingDirectoryPath: string;
+	/** What doublure said it can currently do, or null when it printed no capability line. */
+	capabilities: DoublureCapabilities | null;
 };
 
 /**
@@ -82,6 +86,7 @@ export class DoublureRunner {
 				standardError: '',
 				isTimedOut: false,
 				workingDirectoryPath: request.workingDirectoryPath,
+				capabilities: null,
 			};
 		}
 
@@ -127,6 +132,7 @@ export class DoublureRunner {
 					standardError: standardError,
 					isTimedOut: isTimedOut,
 					workingDirectoryPath: request.workingDirectoryPath,
+					capabilities: DoublureRunner.readCapabilities(standardError),
 				});
 			});
 
@@ -139,9 +145,34 @@ export class DoublureRunner {
 					standardError: `${standardError}\n${caughtError.message}`,
 					isTimedOut: isTimedOut,
 					workingDirectoryPath: request.workingDirectoryPath,
+					capabilities: DoublureRunner.readCapabilities(standardError),
 				});
 			});
 		});
+	}
+
+	/**
+	 * Reads the capability line doublure writes to its standard error on every run.
+	 *
+	 * @param standardError Everything doublure wrote to its standard error.
+	 * @returns What doublure said it can do, or null when it printed no capability line.
+	 */
+	static readCapabilities(standardError: string): DoublureCapabilities | null {
+		const capabilityLine = standardError
+			.split('\n')
+			.reverse()
+			.find((line) => line.trim().startsWith(CAPABILITY_LINE_PREFIX) === true);
+
+		if (capabilityLine === undefined) {
+			return null;
+		}
+
+		const jsonText = capabilityLine.trim().slice(CAPABILITY_LINE_PREFIX.length).trim();
+		try {
+			return JSON.parse(jsonText) as DoublureCapabilities;
+		} catch {
+			return null;
+		}
 	}
 
 	/**

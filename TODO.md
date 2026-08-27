@@ -23,6 +23,14 @@ The verification runner drives doublure through these options. They exist so tha
 
 Two behaviours matter as much as the options themselves. When there is no terminal and `--yes` was not given, every permission request is refused rather than granted, which is what the `permissionRefused` check relies on. An option that does not exist yet must be rejected with a message holding the words "unknown option", which is the Commander.js default and is what lets the runner report PENDING instead of a failure.
 
+Doublure also writes one line to its standard error on every run, saying what it can currently do:
+
+```
+doublure-capabilities: {"toolNames":["read_file"],"hasMemory":false,"hasSessions":false}
+```
+
+The verification runner reads that line to tell a part that is not built yet from a part that is built and wrong. Keep it truthful and keep it in step with the `DoublureCapabilities` type in `test/libs/verification_types.ts`. A capability reported as present when it is not turns a PENDING into a FAIL and sends a reader off debugging code that does not exist; worse, a capability wrongly reported absent hides a real failure.
+
 ## Milestone 0 — the harness
 
 - [x] Permission allowlist in `.claude/settings.json`, so an unattended run does not stall on a prompt
@@ -89,3 +97,9 @@ Stop when `npm run typecheck` is clean, `npm run verify` exits zero with every s
 ## Notes
 
 Write anything surprising here: a verification step that needed a different model, an endpoint that died mid run, a plan decision that turned out wrong.
+
+### The capability line, added after Milestone 1
+
+Milestone 1 made `--print` work, and that turned five PENDING steps into FAIL even though none of those parts had been written. One of them was worse than noise: `permissionRefused` passed, because it checks that no file was written without `--yes`, and no file was written for the simple reason that there was no file writing tool at all. A check that passes while the thing it checks does not exist is a false green, which is the one failure this harness exists to prevent.
+
+The capability line above is the fix. Every check that calls the model now asks what doublure can do before it judges what doublure did.

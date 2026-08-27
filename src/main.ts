@@ -1,5 +1,5 @@
 #!/usr/bin/env -S npx tsx
-import { run } from '@openai/agents';
+import { Agent, run } from '@openai/agents';
 import { Command } from 'commander';
 
 import { AgentBuilder } from './libs/agent/agent_builder.ts';
@@ -84,6 +84,25 @@ class Main {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
+	 * Writes one line to the standard error saying what doublure can currently do.
+	 *
+	 * The verification runner reads this line to tell a part that is not built yet from a part that is built and
+	 * wrong. Keep the shape in step with the `DoublureCapabilities` type in
+	 * `test/libs/verification_types.ts`, which cannot import from here.
+	 *
+	 * @param agent The agent that was built, whose tool list is reported.
+	 * @returns Nothing.
+	 */
+	private static _reportCapabilities(agent: Agent): void {
+		const capabilities = {
+			toolNames: agent.tools.map((tool) => tool.name),
+			hasMemory: false,
+			hasSessions: false,
+		};
+		process.stderr.write(`doublure-capabilities: ${JSON.stringify(capabilities)}\n`);
+	}
+
+	/**
 	 * Answers one prompt and returns.
 	 *
 	 * The answer goes to the standard output and nothing else does, so that a caller reading the standard output
@@ -106,6 +125,8 @@ class Main {
 			systemPrompt: systemPrompt,
 			tools: [],
 		});
+
+		Main._reportCapabilities(agent);
 
 		try {
 			const result = await run(agent, prompt, {

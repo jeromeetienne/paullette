@@ -124,3 +124,32 @@ export type ListOutput = {
 	/** Every skill read from `.doublure/skills`. */
 	skills: Array<{ name: string; description: string }>;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//	The Capability Line
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * The prefix of the line doublure writes to its standard error on every run, saying what it can currently do.
+ *
+ * This exists so that a check can tell a part that is not built yet from a part that is built and wrong. Without
+ * it, a check for the memory tools fails while the memory tools are still unwritten, which reads as a bug and
+ * sends a reader off debugging code that does not exist. Worse, a check can pass for the wrong reason: the check
+ * that a file write is refused passes on its own while there is no file writing tool at all.
+ */
+export const CAPABILITY_LINE_PREFIX = 'doublure-capabilities:';
+
+/**
+ * What doublure says it can currently do. Written by `src/main.ts` and read by `DoublureRunner`. The two sides
+ * are kept in step by hand, because nothing under `test/` may import from `src/`.
+ */
+export type DoublureCapabilities = {
+	/** The names of the tools the agent was given, which is empty until the tools are built. */
+	toolNames: string[];
+	/** True once doublure reads and writes `.doublure/memory`. */
+	hasMemory: boolean;
+	/** True once doublure saves the conversation to `.doublure/sessions`. */
+	hasSessions: boolean;
+};

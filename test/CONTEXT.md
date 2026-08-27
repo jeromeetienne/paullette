@@ -20,3 +20,4 @@ Holds the verification runner, which is the single command that answers whether 
 ## Background
 - The shape doublure must print for the `--list` option is written down as the `ListOutput` type in `libs/verification_types.ts`. That type is the contract, and it is kept next to the only code that reads it.
 - The endpoint check runs before every check that calls the model because a dead local server makes all of those fail at once in a way that says nothing about the code. This is not hypothetical: an Ollama server quit by itself during the session that produced the plan.
+- Every check that calls the model asks `VerificationHelpers.pendingWhenCapabilityMissing` what doublure can do before it judges what doublure did. Without that, a check can pass for the wrong reason — see the note at the end of `TODO.md` for the one that did.

@@ -75,6 +75,15 @@ export class VerificationChecksModel {
 				return pendingResult;
 			}
 
+			const capabilityResult = VerificationHelpers.pendingWhenCapabilityMissing(
+				outcome,
+				(capabilities) => capabilities.toolNames.includes('read_file') === true,
+				'the read_file tool',
+			);
+			if (capabilityResult !== null) {
+				return capabilityResult;
+			}
+
 			if (outcome.standardOutput.toUpperCase().includes('PINEAPPLE') === false) {
 				return VerificationResults.failed(
 					'the answer did not hold the secret word, so read_file did not run or its result was not used',
@@ -105,6 +114,15 @@ export class VerificationChecksModel {
 			const pendingResult = VerificationHelpers.pendingWhenNotReady(outcome, 'the --print option');
 			if (pendingResult !== null) {
 				return pendingResult;
+			}
+
+			const capabilityResult = VerificationHelpers.pendingWhenCapabilityMissing(
+				outcome,
+				(capabilities) => capabilities.toolNames.includes('write_file') === true,
+				'the write_file tool',
+			);
+			if (capabilityResult !== null) {
+				return capabilityResult;
 			}
 
 			const writtenFilePath = Path.join(folderPath, 'should_not_exist.txt');
@@ -144,6 +162,15 @@ export class VerificationChecksModel {
 				return pendingResult;
 			}
 
+			const capabilityResult = VerificationHelpers.pendingWhenCapabilityMissing(
+				outcome,
+				(capabilities) => capabilities.toolNames.includes('write_file') === true,
+				'the write_file tool',
+			);
+			if (capabilityResult !== null) {
+				return capabilityResult;
+			}
+
 			const writtenFilePath = Path.join(folderPath, 'allowed_file.txt');
 			if (Fs.existsSync(writtenFilePath) === false) {
 				return VerificationResults.failed(
@@ -179,6 +206,15 @@ export class VerificationChecksModel {
 			const pendingResult = VerificationHelpers.pendingWhenNotReady(outcome, 'the memory tools');
 			if (pendingResult !== null) {
 				return pendingResult;
+			}
+
+			const capabilityResult = VerificationHelpers.pendingWhenCapabilityMissing(
+				outcome,
+				(capabilities) => capabilities.hasMemory === true,
+				'the memory store',
+			);
+			if (capabilityResult !== null) {
+				return capabilityResult;
 			}
 
 			const memoryFolderPath = Path.join(folderPath, '.doublure', 'memory');
@@ -236,6 +272,15 @@ export class VerificationChecksModel {
 				return pendingResult;
 			}
 
+			const capabilityResult = VerificationHelpers.pendingWhenCapabilityMissing(
+				outcome,
+				(capabilities) => capabilities.toolNames.includes('secret-keeper') === true,
+				'the secret-keeper subagent tool',
+			);
+			if (capabilityResult !== null) {
+				return capabilityResult;
+			}
+
 			if (outcome.standardOutput.toUpperCase().includes('ELDERBERRY') === false) {
 				return VerificationResults.failed(
 					'the passphrase did not come back, so the secret-keeper subagent did not run',
@@ -266,6 +311,15 @@ export class VerificationChecksModel {
 			const pendingResult = VerificationHelpers.pendingWhenNotReady(outcome, 'the session store');
 			if (pendingResult !== null) {
 				return pendingResult;
+			}
+
+			const capabilityResult = VerificationHelpers.pendingWhenCapabilityMissing(
+				outcome,
+				(capabilities) => capabilities.hasSessions === true,
+				'the session store',
+			);
+			if (capabilityResult !== null) {
+				return capabilityResult;
 			}
 
 			const sessionsFolderPath = Path.join(folderPath, '.doublure', 'sessions');
@@ -329,6 +383,15 @@ export class VerificationChecksModel {
 			const pendingResult = VerificationHelpers.pendingWhenNotReady(firstOutcome, 'the session store');
 			if (pendingResult !== null) {
 				return pendingResult;
+			}
+
+			const capabilityResult = VerificationHelpers.pendingWhenCapabilityMissing(
+				firstOutcome,
+				(capabilities) => capabilities.hasSessions === true,
+				'the session store',
+			);
+			if (capabilityResult !== null) {
+				return capabilityResult;
 			}
 
 			const secondOutcome = await DoublureRunner.run({

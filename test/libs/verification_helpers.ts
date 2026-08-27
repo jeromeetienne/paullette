@@ -1,5 +1,10 @@
 import { DoublureRunner, type RunOutcome } from './doublure_runner.ts';
-import { VerificationResults, type ListOutput, type VerificationResult } from './verification_types.ts';
+import {
+	VerificationResults,
+	type DoublureCapabilities,
+	type ListOutput,
+	type VerificationResult,
+} from './verification_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -42,6 +47,35 @@ export class VerificationHelpers {
 
 		if (outcome.isTimedOut === true) {
 			return VerificationResults.failed('doublure did not finish before the timeout ran out');
+		}
+
+		return null;
+	}
+
+	/**
+	 * Says whether doublure lacks the capability a check needs, so that the check reports PENDING rather than a
+	 * failure that reads like a bug.
+	 *
+	 * This also stops a check passing for the wrong reason. The check that a file write is refused would pass on
+	 * its own while there is no file writing tool at all, which is a false green of exactly the kind this whole
+	 * harness exists to prevent.
+	 *
+	 * @param outcome What the run produced.
+	 * @param isPresent Reads the reported capabilities and says whether the needed part is there.
+	 * @param label The name of the needed part, used in the message.
+	 * @returns A pending result when the part is missing, and null when the check can carry on.
+	 */
+	static pendingWhenCapabilityMissing(
+		outcome: RunOutcome,
+		isPresent: (capabilities: DoublureCapabilities) => boolean,
+		label: string,
+	): VerificationResult | null {
+		if (outcome.capabilities === null) {
+			return VerificationResults.pending('doublure printed no capability line');
+		}
+
+		if (isPresent(outcome.capabilities) === false) {
+			return VerificationResults.pending(`${label} is not built yet`);
 		}
 
 		return null;
