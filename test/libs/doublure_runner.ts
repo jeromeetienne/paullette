@@ -27,7 +27,7 @@ const REPOSITORY_ROOT_PATH = Path.resolve(__dirname, '..', '..');
 /**
  * The absolute path of the command line entry point of doublure.
  */
-const MAIN_FILE_PATH = Path.join(REPOSITORY_ROOT_PATH, 'src', 'main.ts');
+const MAIN_FILE_PATH = Path.join(REPOSITORY_ROOT_PATH, 'src', 'cli.ts');
 
 /**
  * The absolute path of the fixture folder that every verification step starts from.
@@ -38,7 +38,7 @@ const FIXTURE_FOLDER_PATH = Path.join(REPOSITORY_ROOT_PATH, 'test', 'fixture');
  * What one run of doublure produced.
  */
 export type RunOutcome = {
-	/** False when `src/main.ts` does not exist yet, which means the step that asked for the run cannot run. */
+	/** False when `src/cli.ts` does not exist yet, which means the step that asked for the run cannot run. */
 	isBuilt: boolean;
 	/** The status doublure exited with, or null when it was stopped by the timeout. */
 	exitCode: number | null;
@@ -185,7 +185,7 @@ export class DoublureRunner {
 	/**
 	 * Says whether the command line entry point of doublure exists yet.
 	 *
-	 * @returns True when `src/main.ts` exists.
+	 * @returns True when `src/cli.ts` exists.
 	 */
 	static isBuilt(): boolean {
 		return Fs.existsSync(MAIN_FILE_PATH);

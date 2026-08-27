@@ -5,15 +5,17 @@
 	"type": "module",
 	"license": "MIT",
 	"bin": {
-		"doublure": "./src/main.ts"
+		"doublure": "./src/cli.ts"
 	},
 	"scripts": {
-		"start": "tsx ./src/main.ts",
-		"doublure": "tsx ./src/main.ts",
+		"start": "tsx ./src/cli.ts",
 		"typecheck": "tsc --noEmit",
 		"verify": "tsx ./test/run_verification.ts",
 		"verify:fast": "tsx ./test/run_verification.ts --fast",
-		"test": "tsx ./test/run_verification.ts"
+		"test": "tsx ./test/run_verification.ts",
+		"lmstudio:status": "lms server status",
+		"lmstudio:start": "lms server start",
+		"lmstudio:stop": "lms server stop"
 	},
 	"dependencies": {
 		"@openai/agents": "^0.17.0",
