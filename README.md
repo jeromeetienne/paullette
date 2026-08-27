@@ -80,6 +80,8 @@ To see exactly what was loaded:
 npx paullette --list
 ```
 
+Every frontmatter field of every file, and what each one falls back to, is in [`docs/paullette_folder.md`](docs/paullette_folder.md).
+
 ## Slash commands
 
 These are built in:
@@ -169,6 +171,8 @@ npm start
 
 The verification suite needs an endpoint to be serving at the address paullette is configured with. `npm run lmstudio:start` starts the LM Studio local server, and `npm run lmstudio:status` says whether it is running.
 
+How the two suites work, what each one is good at, and what neither covers is in [`docs/testing.md`](docs/testing.md). How the parts of paullette fit together is in [`docs/architecture.md`](docs/architecture.md).
+
 ### How the repository is laid out
 
 The repository is an npm workspace holding one package per part of paullette.
@@ -181,7 +185,7 @@ packages/
 	                   Published as paullette, and this is what npx paullette runs.
 test/                  the verification runner, which starts paullette as a separate
 	                   process. The unit tests live inside each package instead.
-docs/                  the longer pages the README links to.
+docs/                  the longer pages this README links to. Start at docs/README.md.
 ```
 
 `paullette` imports `paullette-core` by name, for example `import { ToolRegistry } from 'paullette-core/tools/tool_registry';`. Nothing imports across a package folder by a relative path, and `paullette-core` never imports from `paullette`. That is what will let a web interface sit on the same agent as the terminal interface.
