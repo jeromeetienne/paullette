@@ -19,6 +19,7 @@ They live inside each package, next to the code they cover:
 ```
 packages/paullette-core/test/unit/    one file per source file of paullette-core
 packages/paullette-core/test/libs/    what the test files share
+packages/paullette-web/test/unit/     the permission asker, the Markdown, the static files, and the router
 packages/paullette-cli/test/unit/     the part of the terminal code that can be tested without a terminal
 ```
 
@@ -30,6 +31,7 @@ They run on the Node.js test runner, through `node --import tsx --conditions=dev
 
 - **It never calls a model and never reaches the network.** The whole suite runs in seconds and needs nothing running.
 - **It never writes into the repository.** It writes into a folder made by `TemporaryFolder` and removes it in an `afterEach`. `TemporaryFolder.remove` refuses any path it did not make itself, so a test cannot delete a folder whose path it computed wrongly.
+- **It never starts a web server on a fixed port.** The tests of `paullette-web` call the router, the permission asker, and the static file server directly, so two test runs at the same time cannot collide. Whether a whole turn really reaches a browser is asked by the verification runner instead, which is the only place that whole chain exists.
 - **It never reads a constant out of the code it is testing to build the value it then asserts on.** A cap or a default is written out again in the test. Otherwise changing the code changes the test with it, and the test only ever agrees with itself.
 - **It calls a tool through `ToolHarness.invoke`**, the way the software development kit calls it, with the arguments as JSON — so that the schema of the tool is part of what is tested, not only its body.
 - **It wraps anything that prints to the standard error in `StandardErrorCapture.run`**, so the output of the test run stays readable.
@@ -58,16 +60,16 @@ They cannot say whether the whole chain works, because nothing in them starts pa
 
 `npm run verify` is the single command that answers "is it done". It lives in `/test`, belongs to no package, and starts paullette as a separate process.
 
-Each of its fourteen steps carries out one numbered step of the verification section of the plan in [issue #1](https://github.com/jeromeetienne/paullette/issues/1).
+Each of its sixteen steps carries out one numbered step of a plan: fourteen from the verification section of the plan in [issue #1](https://github.com/jeromeetienne/paullette/issues/1), and two from the plan for the web interface in [issue #9](https://github.com/jeromeetienne/paullette/issues/9).
 
 ```
-paullette verification  —  14 steps
+paullette verification  —  16 steps
 
 PASS    typecheck            plan step 1  the compiler reported no error
 PASS    endpoint             plan step 2  http://127.0.0.1:1234/v1 serves qwen3.5-4b
 PASS    folderCreated        plan step 3  .paullette and its subfolders were created
 ...
-14 passed, 0 failed, 0 pending
+16 passed, 0 failed, 0 pending
 ```
 
 ### The three outcomes mean three different things
@@ -87,7 +89,7 @@ The exit status follows the same three meanings: **zero** when every check passe
 Every check that calls the model first asks paullette what it can do, through `VerificationHelpers.pendingWhenCapabilityMissing`, which reads the line paullette writes to its standard error on every run:
 
 ```
-paullette-capabilities: {"toolNames":[...],"hasMemory":true,"hasSessions":true,"modelContextProtocolServerNames":["now"]}
+paullette-capabilities: {"toolNames":[...],"hasMemory":true,"hasSessions":true,"hasWebInterface":true,"modelContextProtocolServerNames":["now"]}
 ```
 
 That line exists because of a real false green. Before it, the check that a file write is refused **passed** — for the simple reason that there was no file writing tool at all. A check that passes while the thing it checks does not exist is the one failure this harness exists to prevent.

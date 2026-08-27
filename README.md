@@ -26,18 +26,31 @@ Point it at another endpoint and another model:
 npx paullette --base-url https://api.openai.com/v1 --api-key sk-your-key --model gpt-4o-mini
 ```
 
+Hold the conversation in a browser instead of at the terminal:
+
+```bash
+npx paullette web
+```
+
+That starts a local web server, prints the address, and serves a page holding the conversation, with the answers of the model rendered as Markdown and a permission question shown as a form. It is written up in [`docs/web_interface.md`](docs/web_interface.md).
+
 ## Documentation
 
 | Page | What it is for |
 | --- | --- |
 | [`docs/paullette_folder.md`](docs/paullette_folder.md) | The format reference of the `.paullette` folder: every frontmatter field of a subagent, a slash command, a skill, and a memory file, and what each one falls back to. |
 | [`docs/mcp_server.md`](docs/mcp_server.md) | How to declare a Model Context Protocol server, both transports, how the three source files are merged, and what happens when a server does not start. |
+| [`docs/web_interface.md`](docs/web_interface.md) | The web interface: what `npx paullette web` serves, the routes, how a permission question is answered from the browser, and why the default address is the loopback address. |
 | [`docs/architecture.md`](docs/architecture.md) | How the parts of paullette fit together, in what order they run, and why each boundary is where it is. For somebody working on paullette itself. |
 | [`docs/testing.md`](docs/testing.md) | The two test suites, what each one is good at, what neither covers, and how to add to either. |
 
 The index of all of them is [`docs/README.md`](docs/README.md). The rest of this page is the short version.
 
 ## Command line options
+
+| Command | What it does |
+| --- | --- |
+| `web` | Start a local web server, print its address, and serve the web interface until the interrupt key stops it. It takes `--port <number>`, `3000` by default, and `--host <address>`, `127.0.0.1` by default, along with every option below. |
 
 | Option | What it does |
 | --- | --- |
@@ -192,6 +205,9 @@ The repository is an npm workspace holding one package per part of paullette.
 packages/
 	paullette-core/    the agent, the configuration, the .paullette folder reader,
 	                   the history, the memory, and the tools. Published as paullette-core.
+	paullette-web/     the web interface: the web server, the routes, and the files
+	                   sent to the browser. Published as paullette-web, and this is
+	                   what npx paullette web starts.
 	paullette-cli/     the terminal interface and the command line entry point.
 	                   Published as paullette, and this is what npx paullette runs.
 test/                  the verification runner, which starts paullette as a separate
@@ -199,9 +215,9 @@ test/                  the verification runner, which starts paullette as a sepa
 docs/                  the longer pages this README links to. Start at docs/README.md.
 ```
 
-`paullette` imports `paullette-core` by name, for example `import { ToolRegistry } from 'paullette-core/tools/tool_registry';`. Nothing imports across a package folder by a relative path, and `paullette-core` never imports from `paullette`. That is what will let a web interface sit on the same agent as the terminal interface.
+A package reaches another by name, for example `import { ToolRegistry } from 'paullette-core/tools/tool_registry';`. Nothing imports across a package folder by a relative path, and `paullette-core` never imports from either front end. That is what lets the terminal interface and the web interface sit on the same agent. The two front ends do not import from each other either, apart from `packages/paullette-cli/src/cli.ts` reaching `paullette-web` to hand over when `web` is typed.
 
-Both packages carry the same version number and are published together by `npm run publish:all`.
+All three packages carry the same version number and are published together by `npm run publish:all`.
 
 ## Licence
 

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, test } from 'node:test';
 import { ConfigFolderReader } from 'paullette-core/config_folder/config_folder_reader';
 import { SessionStore } from 'paullette-core/history/session_store';
 import { MemoryStore } from 'paullette-core/memory/memory_store';
-import { ConversationSession } from '../../src/terminal/conversation_session.ts';
+import { ConversationSession } from 'paullette-core/agent/conversation_session';
 import { SlashCommandHandler } from '../../src/terminal/slash_command_handler.ts';
 import { StandardErrorCapture } from 'paullette-core/test_helpers/standard_error_capture';
 import { ToolHarness } from 'paullette-core/test_helpers/tool_harness';

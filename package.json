@@ -10,17 +10,17 @@
 	],
 	"scripts": {
 		"start": "npm start --workspace paullette --",
-		"build": "npm run build --workspace paullette-core && npm run build --workspace paullette",
-		"typecheck": "npm run typecheck --workspace paullette-core && npm run typecheck --workspace paullette && tsc --noEmit -p tsconfig.json",
+		"build": "npm run build --workspace paullette-core && npm run build --workspace paullette-web && npm run build --workspace paullette",
+		"typecheck": "npm run typecheck --workspace paullette-core && npm run typecheck --workspace paullette-web && npm run typecheck --workspace paullette && tsc --noEmit -p tsconfig.json",
 		"verify": "tsx ./test/run_verification.ts",
 		"verify:fast": "tsx ./test/run_verification.ts --fast",
-		"test:unit": "npm run test:unit --workspace paullette-core && npm run test:unit --workspace paullette",
+		"test:unit": "npm run test:unit --workspace paullette-core && npm run test:unit --workspace paullette-web && npm run test:unit --workspace paullette",
 		"test": "npm run test:unit && npm run verify",
-		"publish:all": "npm run build && npm version patch --workspaces --include-workspace-root && npm publish --workspace paullette-core && npm publish --workspace paullette",
+		"publish:all": "npm run build && npm version patch --workspaces --include-workspace-root && npm publish --workspace paullette-core && npm publish --workspace paullette-web && npm publish --workspace paullette",
 		"lmstudio:status": "lms server status",
 		"lmstudio:start": "lms server start",
 		"lmstudio:stop": "lms server stop",
-		"clean": "rm -rf packages/paullette-core/dist packages/paullette-cli/dist",
+		"clean": "rm -rf packages/paullette-core/dist packages/paullette-web/dist packages/paullette-cli/dist",
 		"prepublishOnly": "npm run clean && npm run build"
 	},
 	"devDependencies": {

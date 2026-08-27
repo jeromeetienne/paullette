@@ -4,7 +4,7 @@ import { type Agent } from '@openai/agents';
 
 import { type PaulletteConfig } from 'paullette-core/config_runtime/config_types';
 import { InputHistoryStore } from 'paullette-core/history/input_history_store';
-import { type ConversationSession } from './conversation_session.ts';
+import { type ConversationSession } from 'paullette-core/agent/conversation_session';
 import { OutputRenderer } from './output_renderer.ts';
 import { type PermissionPrompt } from './permission_prompt.ts';
 import { type SlashCommandHandler } from './slash_command_handler.ts';
@@ -172,7 +172,11 @@ export class ReadlineInterface {
 				this._request.agent,
 				promptText,
 				this._request.config.maximumTurnCount,
-				(textChunk) => OutputRenderer.writeAnswerChunk(textChunk),
+				(turnEvent) => {
+					if (turnEvent.kind === 'text') {
+						OutputRenderer.writeAnswerChunk(turnEvent.delta);
+					}
+				},
 			);
 			OutputRenderer.endAnswer();
 		} catch (caughtError) {
