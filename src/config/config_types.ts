@@ -2,15 +2,15 @@ import { z } from 'zod';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	config_types — the shape of the doublure configuration
+//	config_types — the shape of the code-agent configuration
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The Zod schema of the doublure configuration. The configuration says which OpenAI API compatible endpoint to
+ * The Zod schema of the code-agent configuration. The configuration says which OpenAI API compatible endpoint to
  * call, which model to use on that endpoint, and how the command line interface behaves.
  */
-export const doublureConfigSchema = z.object({
+export const codeAgentConfigSchema = z.object({
 	/** The base address of the OpenAI API compatible endpoint, for example `http://127.0.0.1:1234/v1`. */
 	baseUrl: z.string().min(1),
 	/** The key sent to the OpenAI API compatible endpoint. Local endpoints accept any value. */
@@ -19,18 +19,18 @@ export const doublureConfigSchema = z.object({
 	modelName: z.string().min(1),
 	/** The folder the agent reads files from and runs shell commands in. */
 	workingDirectoryPath: z.string().min(1),
-	/** The largest number of model turns a single request is allowed to take before doublure stops the loop. */
+	/** The largest number of model turns a single request is allowed to take before code-agent stops the loop. */
 	maximumTurnCount: z.number().int().positive(),
-	/** When true, doublure asks the user to confirm before it writes a file or runs a shell command. */
+	/** When true, code-agent asks the user to confirm before it writes a file or runs a shell command. */
 	isPermissionPromptEnabled: z.boolean(),
-	/** When true, doublure prints the name and the arguments of every tool call as it happens. */
+	/** When true, code-agent prints the name and the arguments of every tool call as it happens. */
 	isToolCallLoggingEnabled: z.boolean(),
 });
 
 /**
- * The doublure configuration, built from the command line options, the environment variables, and the defaults.
+ * The code-agent configuration, built from the command line options, the environment variables, and the defaults.
  */
-export type DoublureConfig = z.infer<typeof doublureConfigSchema>;
+export type CodeAgentConfig = z.infer<typeof codeAgentConfigSchema>;
 
 /**
  * The default base address of the OpenAI API compatible endpoint. This is the address the LM Studio local server

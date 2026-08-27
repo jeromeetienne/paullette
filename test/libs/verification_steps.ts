@@ -40,7 +40,7 @@ export class VerificationSteps {
 			},
 			{
 				name: 'folderCreated',
-				title: 'Starting in an empty folder creates .doublure and its subfolders',
+				title: 'Starting in an empty folder creates .code-agent and its subfolders',
 				planStepNumber: 3,
 				isModelNeeded: false,
 				run: VerificationChecksStatic.checkFolderCreated,
@@ -110,7 +110,7 @@ export class VerificationSteps {
 			},
 			{
 				name: 'sessionSaved',
-				title: 'The conversation is written to .doublure/sessions',
+				title: 'The conversation is written to .code-agent/sessions',
 				planStepNumber: 10,
 				isModelNeeded: true,
 				run: VerificationChecksModel.checkSessionSaved,

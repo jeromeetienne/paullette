@@ -7,7 +7,7 @@ import {
 	CAPABILITY_LINE_PREFIX,
 	VERIFICATION_BASE_URL,
 	VERIFICATION_MODEL_NAME,
-	type DoublureCapabilities,
+	type CodeAgentCapabilities,
 } from './verification_types.ts';
 
 const __filename = import.meta.filename;
@@ -15,7 +15,7 @@ const __dirname = import.meta.dirname;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	DoublureRunner — starts doublure without a terminal and captures what it wrote
+//	CodeAgentRunner — starts code-agent without a terminal and captures what it wrote
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -25,7 +25,7 @@ const __dirname = import.meta.dirname;
 const REPOSITORY_ROOT_PATH = Path.resolve(__dirname, '..', '..');
 
 /**
- * The absolute path of the command line entry point of doublure.
+ * The absolute path of the command line entry point of code-agent.
  */
 const MAIN_FILE_PATH = Path.join(REPOSITORY_ROOT_PATH, 'src', 'cli.ts');
 
@@ -35,55 +35,55 @@ const MAIN_FILE_PATH = Path.join(REPOSITORY_ROOT_PATH, 'src', 'cli.ts');
 const FIXTURE_FOLDER_PATH = Path.join(REPOSITORY_ROOT_PATH, 'test', 'fixture');
 
 /**
- * What one run of doublure produced.
+ * What one run of code-agent produced.
  */
 export type RunOutcome = {
 	/** False when `src/cli.ts` does not exist yet, which means the step that asked for the run cannot run. */
 	isBuilt: boolean;
-	/** The status doublure exited with, or null when it was stopped by the timeout. */
+	/** The status code-agent exited with, or null when it was stopped by the timeout. */
 	exitCode: number | null;
-	/** Everything doublure wrote to its standard output, which is the answer of the model. */
+	/** Everything code-agent wrote to its standard output, which is the answer of the model. */
 	standardOutput: string;
-	/** Everything doublure wrote to its standard error, which is the log of the tool calls. */
+	/** Everything code-agent wrote to its standard error, which is the log of the tool calls. */
 	standardError: string;
-	/** True when doublure was still running when the timeout ran out. */
+	/** True when code-agent was still running when the timeout ran out. */
 	isTimedOut: boolean;
-	/** The folder doublure ran in, so that a step can look at the files it left behind. */
+	/** The folder code-agent ran in, so that a step can look at the files it left behind. */
 	workingDirectoryPath: string;
-	/** What doublure said it can currently do, or null when it printed no capability line. */
-	capabilities: DoublureCapabilities | null;
+	/** What code-agent said it can currently do, or null when it printed no capability line. */
+	capabilities: CodeAgentCapabilities | null;
 };
 
 /**
- * The values one run of doublure needs.
+ * The values one run of code-agent needs.
  */
 export type RunRequest = {
-	/** The folder doublure runs in, which is also the folder it treats as the project root. */
+	/** The folder code-agent runs in, which is also the folder it treats as the project root. */
 	workingDirectoryPath: string;
-	/** The options and arguments given to doublure, for example `['--print', 'hello']`. */
+	/** The options and arguments given to code-agent, for example `['--print', 'hello']`. */
 	commandLineArguments: string[];
-	/** How long to wait before stopping doublure. A local model needs a generous value here. */
+	/** How long to wait before stopping code-agent. A local model needs a generous value here. */
 	timeoutMilliseconds?: number;
 };
 
 /**
- * Starts doublure without a terminal and captures what it wrote.
+ * Starts code-agent without a terminal and captures what it wrote.
  *
- * Every verification step goes through this class rather than starting doublure itself, so that there is one
- * place that knows how doublure is started and one place that decides whether doublure exists yet.
+ * Every verification step goes through this class rather than starting code-agent itself, so that there is one
+ * place that knows how code-agent is started and one place that decides whether code-agent exists yet.
  */
-export class DoublureRunner {
+export class CodeAgentRunner {
 	/**
-	 * Runs doublure once and waits for it to exit.
+	 * Runs code-agent once and waits for it to exit.
 	 *
-	 * The standard input is closed, so doublure sees that there is no terminal. That is what a verification step
+	 * The standard input is closed, so code-agent sees that there is no terminal. That is what a verification step
 	 * relies on when it checks that the permission prompt refuses by default.
 	 *
 	 * @param request The folder to run in, the command line arguments, and the timeout.
 	 * @returns What the run produced.
 	 */
 	static async run(request: RunRequest): Promise<RunOutcome> {
-		if (DoublureRunner.isBuilt() === false) {
+		if (CodeAgentRunner.isBuilt() === false) {
 			return {
 				isBuilt: false,
 				exitCode: null,
@@ -107,8 +107,8 @@ export class DoublureRunner {
 					env: {
 						...process.env,
 						NO_COLOR: '1',
-						DOUBLURE_BASE_URL: VERIFICATION_BASE_URL,
-						DOUBLURE_MODEL: VERIFICATION_MODEL_NAME,
+						CODE_AGENT_BASE_URL: VERIFICATION_BASE_URL,
+						CODE_AGENT_MODEL: VERIFICATION_MODEL_NAME,
 					},
 				},
 			);
@@ -139,7 +139,7 @@ export class DoublureRunner {
 					standardError: standardError,
 					isTimedOut: isTimedOut,
 					workingDirectoryPath: request.workingDirectoryPath,
-					capabilities: DoublureRunner.readCapabilities(standardError),
+					capabilities: CodeAgentRunner.readCapabilities(standardError),
 				});
 			});
 
@@ -152,19 +152,19 @@ export class DoublureRunner {
 					standardError: `${standardError}\n${caughtError.message}`,
 					isTimedOut: isTimedOut,
 					workingDirectoryPath: request.workingDirectoryPath,
-					capabilities: DoublureRunner.readCapabilities(standardError),
+					capabilities: CodeAgentRunner.readCapabilities(standardError),
 				});
 			});
 		});
 	}
 
 	/**
-	 * Reads the capability line doublure writes to its standard error on every run.
+	 * Reads the capability line code-agent writes to its standard error on every run.
 	 *
-	 * @param standardError Everything doublure wrote to its standard error.
-	 * @returns What doublure said it can do, or null when it printed no capability line.
+	 * @param standardError Everything code-agent wrote to its standard error.
+	 * @returns What code-agent said it can do, or null when it printed no capability line.
 	 */
-	static readCapabilities(standardError: string): DoublureCapabilities | null {
+	static readCapabilities(standardError: string): CodeAgentCapabilities | null {
 		const capabilityLine = standardError
 			.split('\n')
 			.reverse()
@@ -176,14 +176,14 @@ export class DoublureRunner {
 
 		const jsonText = capabilityLine.trim().slice(CAPABILITY_LINE_PREFIX.length).trim();
 		try {
-			return JSON.parse(jsonText) as DoublureCapabilities;
+			return JSON.parse(jsonText) as CodeAgentCapabilities;
 		} catch {
 			return null;
 		}
 	}
 
 	/**
-	 * Says whether the command line entry point of doublure exists yet.
+	 * Says whether the command line entry point of code-agent exists yet.
 	 *
 	 * @returns True when `src/cli.ts` exists.
 	 */
@@ -192,11 +192,11 @@ export class DoublureRunner {
 	}
 
 	/**
-	 * Says whether doublure rejected an option it does not know about. A verification step treats that as work
+	 * Says whether code-agent rejected an option it does not know about. A verification step treats that as work
 	 * still to do rather than as a failure, because the option is part of the plan and not yet written.
 	 *
 	 * @param outcome What the run produced.
-	 * @returns True when doublure complained about an unknown option or an unknown argument.
+	 * @returns True when code-agent complained about an unknown option or an unknown argument.
 	 */
 	static isOptionUnsupported(outcome: RunOutcome): boolean {
 		const combinedOutput = `${outcome.standardOutput}\n${outcome.standardError}`.toLowerCase();
@@ -207,13 +207,13 @@ export class DoublureRunner {
 	/**
 	 * Makes an empty temporary folder for a run.
 	 *
-	 * The folder holds no `.git`, so doublure treats the folder itself as the project root, and no `.doublure`,
-	 * so a run in it shows whether doublure creates the folder it needs.
+	 * The folder holds no `.git`, so code-agent treats the folder itself as the project root, and no `.code-agent`,
+	 * so a run in it shows whether code-agent creates the folder it needs.
 	 *
 	 * @returns The absolute path of the new folder.
 	 */
 	static makeEmptyFolder(): string {
-		return Fs.mkdtempSync(Path.join(Os.tmpdir(), 'doublure-verify-empty-'));
+		return Fs.mkdtempSync(Path.join(Os.tmpdir(), 'code-agent-verify-empty-'));
 	}
 
 	/**
@@ -225,7 +225,7 @@ export class DoublureRunner {
 	 * @returns The absolute path of the new folder.
 	 */
 	static makeFixtureFolder(): string {
-		const folderPath = Fs.mkdtempSync(Path.join(Os.tmpdir(), 'doublure-verify-fixture-'));
+		const folderPath = Fs.mkdtempSync(Path.join(Os.tmpdir(), 'code-agent-verify-fixture-'));
 		Fs.cpSync(FIXTURE_FOLDER_PATH, folderPath, {
 			recursive: true,
 		});
@@ -239,7 +239,7 @@ export class DoublureRunner {
 	 * @returns Nothing.
 	 */
 	static removeFolder(folderPath: string): void {
-		if (folderPath.includes('doublure-verify-') === false) {
+		if (folderPath.includes('code-agent-verify-') === false) {
 			throw new Error(`refusing to remove ${folderPath}, which this class did not make`);
 		}
 		Fs.rmSync(folderPath, {

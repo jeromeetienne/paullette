@@ -56,7 +56,7 @@ export class PermissionPrompt implements PermissionAsker {
 	/**
 	 * Asks the user whether a tool may do what it is about to do.
 	 *
-	 * When there is no terminal to ask at, the answer is no. That is the safe direction: doublure running with
+	 * When there is no terminal to ask at, the answer is no. That is the safe direction: code-agent running with
 	 * its input closed, from a script or from a check, must never change a file that nobody approved.
 	 *
 	 * @param request What the tool is about to do.
@@ -73,7 +73,7 @@ export class PermissionPrompt implements PermissionAsker {
 
 		if (process.stdin.isTTY !== true) {
 			process.stderr.write(
-				`doublure refused ${request.toolName} (${request.summary}): there is no terminal to ask at. ` +
+				`code-agent refused ${request.toolName} (${request.summary}): there is no terminal to ask at. ` +
 					'Use --yes to approve every request.\n',
 			);
 			return 'refused';
@@ -95,7 +95,7 @@ export class PermissionPrompt implements PermissionAsker {
 	 * @returns Whether the tool may go ahead.
 	 */
 	private async _askAtTerminal(request: PermissionRequest): Promise<PermissionDecision> {
-		process.stderr.write(`\n${Chalk.yellow('doublure wants to')} ${request.summary}\n`);
+		process.stderr.write(`\n${Chalk.yellow('code-agent wants to')} ${request.summary}\n`);
 
 		if (request.detail !== undefined && request.detail.length > 0) {
 			const shownDetail = request.detail.slice(0, SHOWN_DETAIL_CHARACTER_COUNT);

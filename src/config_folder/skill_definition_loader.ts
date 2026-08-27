@@ -1,12 +1,12 @@
 import Fs from 'node:fs';
 import Path from 'node:path';
 
-import { skillFrontmatterSchema, type SkillDefinition } from './doublure_folder_types.ts';
+import { skillFrontmatterSchema, type SkillDefinition } from './config_folder_types.ts';
 import { FrontmatterParser } from './frontmatter_parser.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	SkillDefinitionLoader — reads the skills out of .doublure/skills
+//	SkillDefinitionLoader — reads the skills out of .code-agent/skills
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -16,17 +16,17 @@ import { FrontmatterParser } from './frontmatter_parser.ts';
 const SKILL_FILE_NAME = 'SKILL.md';
 
 /**
- * Reads the skills out of `.doublure/skills`.
+ * Reads the skills out of `.code-agent/skills`.
  */
 export class SkillDefinitionLoader {
 	/**
 	 * Reads every skill definition. Each skill is a folder holding a `SKILL.md`.
 	 *
-	 * @param doublureFolderPath The absolute path of the `.doublure` folder.
+	 * @param configFolderPath The absolute path of the `.code-agent` folder.
 	 * @returns Every skill definition, with the name of a skill appearing at most once.
 	 */
-	static loadAll(doublureFolderPath: string): SkillDefinition[] {
-		const skillsFolderPath = Path.join(doublureFolderPath, 'skills');
+	static loadAll(configFolderPath: string): SkillDefinition[] {
+		const skillsFolderPath = Path.join(configFolderPath, 'skills');
 		if (Fs.existsSync(skillsFolderPath) === false) {
 			return [];
 		}

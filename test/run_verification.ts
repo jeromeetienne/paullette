@@ -55,8 +55,8 @@ type RunnerOptions = {
 /**
  * Runs every verification step and prints one scoreboard.
  *
- * This is the single command that answers "is doublure done". A step that passes proves something was really
- * seen; a step that is pending says which part of doublure has still to be written; a step that fails is a fault
+ * This is the single command that answers "is code-agent done". A step that passes proves something was really
+ * seen; a step that is pending says which part of code-agent has still to be written; a step that fails is a fault
  * in code that already exists.
  */
 export class RunVerification {
@@ -77,7 +77,7 @@ export class RunVerification {
 			process.exit(EXIT_STATUS_SOMETHING_FAILED);
 		}
 
-		process.stdout.write(`\n${Chalk.bold('doublure verification')}  —  ${chosenSteps.length} steps\n\n`);
+		process.stdout.write(`\n${Chalk.bold('code-agent verification')}  —  ${chosenSteps.length} steps\n\n`);
 
 		const results: Array<{ step: VerificationStep; result: VerificationResult }> = [];
 

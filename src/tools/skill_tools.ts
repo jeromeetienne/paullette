@@ -1,7 +1,7 @@
 import { tool } from '@openai/agents';
 import { z } from 'zod';
 
-import { type SkillDefinition } from '../doublure_folder/doublure_folder_types.ts';
+import { type SkillDefinition } from '../config_folder/config_folder_types.ts';
 import { ToolPaths } from './tool_paths.ts';
 import { type ToolContext } from './tool_types.ts';
 
@@ -22,7 +22,7 @@ export class SkillTools {
 	 * Builds the skill tool, or nothing at all when the project has no skills.
 	 *
 	 * @param context The working folder, the permission asker, and the tool call logger.
-	 * @param skillDefinitions Every skill read out of the `.doublure` folder.
+	 * @param skillDefinitions Every skill read out of the `.code-agent` folder.
 	 * @returns The skill tools, which is an empty list when there are no skills.
 	 */
 	static createAll(context: ToolContext, skillDefinitions: SkillDefinition[]) {
@@ -43,7 +43,7 @@ export class SkillTools {
 	 * Builds the tool that returns the instructions of one skill.
 	 *
 	 * @param context The working folder, the permission asker, and the tool call logger.
-	 * @param skillDefinitions Every skill read out of the `.doublure` folder.
+	 * @param skillDefinitions Every skill read out of the `.code-agent` folder.
 	 * @returns The tool.
 	 */
 	private static _createLoadSkill(context: ToolContext, skillDefinitions: SkillDefinition[]) {

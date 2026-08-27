@@ -8,8 +8,8 @@ Everything that talks to the person at the terminal: asking permission, reading 
 
 ## Rules
 - This folder may import from `tools/`, but `tools/` must never import from here. The dependency runs one way so that a tool can be used without a terminal.
-- Everything doublure says about its own working goes to the standard error. The standard output carries only the answer of the model, so that a caller reading the standard output gets the answer on its own.
-- `PermissionPrompt` refuses when there is no terminal to ask at. That is the safe direction: doublure running from a script or from a check must never change a file that nobody approved.
+- Everything code-agent says about its own working goes to the standard error. The standard output carries only the answer of the model, so that a caller reading the standard output gets the answer on its own.
+- `PermissionPrompt` refuses when there is no terminal to ask at. That is the safe direction: code-agent running from a script or from a check must never change a file that nobody approved.
 - Only one thing reads the terminal at a time. When the interactive loop owns a readline interface it hands it to `PermissionPrompt.setReadlineInterface`, rather than a second interface being opened behind its back.
 
 ## Background

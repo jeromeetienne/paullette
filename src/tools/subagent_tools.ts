@@ -1,11 +1,11 @@
 import { Agent } from '@openai/agents';
 
-import { type AgentDefinition } from '../doublure_folder/doublure_folder_types.ts';
+import { type AgentDefinition } from '../config_folder/config_folder_types.ts';
 import { ToolRegistry, type BuiltTool } from './tool_registry.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	SubagentTools — turns every subagent in .doublure/agents into a callable tool
+//	SubagentTools — turns every subagent in .code-agent/agents into a callable tool
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -13,7 +13,7 @@ import { ToolRegistry, type BuiltTool } from './tool_registry.ts';
  * Everything needed to turn the subagent definitions into tools.
  */
 export type SubagentToolsRequest = {
-	/** Every subagent read out of `.doublure/agents`. */
+	/** Every subagent read out of `.code-agent/agents`. */
 	agentDefinitions: AgentDefinition[];
 	/** The identifier of the model every subagent runs on. */
 	modelName: string;
@@ -22,14 +22,14 @@ export type SubagentToolsRequest = {
 };
 
 /**
- * Turns every subagent in `.doublure/agents` into a tool the main agent can call.
+ * Turns every subagent in `.code-agent/agents` into a tool the main agent can call.
  */
 export class SubagentTools {
 	/**
 	 * Builds one tool per subagent definition.
 	 *
-	 * The `model` field of a subagent is read and then ignored, because doublure runs one configured model. That
-	 * is a deliberate choice rather than an oversight: a `.doublure` folder copied from a Claude Code project
+	 * The `model` field of a subagent is read and then ignored, because code-agent runs one configured model. That
+	 * is a deliberate choice rather than an oversight: a `.code-agent` folder copied from a Claude Code project
 	 * names Anthropic models that the configured endpoint does not serve.
 	 *
 	 * @param request The subagent definitions, the model, and the tools to choose from.
@@ -57,7 +57,7 @@ export class SubagentTools {
 	 * Everything that is not a letter, a digit, or an underscore becomes an underscore, a hyphen included. That
 	 * is not a free choice: the OpenAI Agents SDK normalises a tool name the same way, so a subagent called
 	 * `secret-keeper` is offered to the model as `secret_keeper` whatever this method does. Doing the same thing
-	 * here means the name doublure reports and the name the model sees are the one name.
+	 * here means the name code-agent reports and the name the model sees are the one name.
 	 *
 	 * @param agentName The name of the subagent.
 	 * @returns The tool name.

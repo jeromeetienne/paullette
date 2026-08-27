@@ -13,9 +13,9 @@ import { PermissionPrompt } from './terminal/permission_prompt.ts';
 import { ReadlineInterface } from './terminal/readline_interface.ts';
 import { SlashCommandHandler } from './terminal/slash_command_handler.ts';
 import { ConfigLoader } from './config/config_loader.ts';
-import { type DoublureConfig } from './config/config_types.ts';
-import { DoublureFolderReader } from './doublure_folder/doublure_folder_reader.ts';
-import { type DoublureFolderContent } from './doublure_folder/doublure_folder_types.ts';
+import { type CodeAgentConfig } from './config/config_types.ts';
+import { ConfigFolderReader } from './config_folder/config_folder_reader.ts';
+import { type ConfigFolderContent } from './config_folder/config_folder_types.ts';
 import { InputHistoryStore } from './history/input_history_store.ts';
 import { SessionStore } from './history/session_store.ts';
 import { MemoryStore } from './memory/memory_store.ts';
@@ -27,17 +27,17 @@ import { type ToolContext } from './tools/tool_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	Main — the command line entry point of doublure
+//	Main — the command line entry point of code-agent
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The options doublure accepts on the command line.
+ * The options code-agent accepts on the command line.
  */
 type CommandLineOptions = {
 	/** The prompt to answer in one turn before exiting, when the one-shot mode was asked for. */
 	print?: string;
-	/** True to print what was read out of the `.doublure` folder as JSON and exit. */
+	/** True to print what was read out of the `.code-agent` folder as JSON and exit. */
 	list?: boolean;
 	/** The slash command to expand and print without calling the model, for example `/greet World`. */
 	expand?: string;
@@ -59,10 +59,10 @@ type CommandLineOptions = {
  * Everything built at startup and used by whichever mode was asked for.
  */
 type StartedSession = {
-	/** The configuration doublure is running with. */
-	config: DoublureConfig;
-	/** Everything read out of the `.doublure` folder. */
-	content: DoublureFolderContent;
+	/** The configuration code-agent is running with. */
+	config: CodeAgentConfig;
+	/** Everything read out of the `.code-agent` folder. */
+	content: ConfigFolderContent;
 	/** The working folder, the permission asker, and the tool call logger. */
 	toolContext: ToolContext;
 	/** Asks the user before a tool changes anything. */
@@ -82,7 +82,7 @@ type StartedSession = {
 };
 
 /**
- * The command line entry point of doublure.
+ * The command line entry point of code-agent.
  */
 class Main {
 	/**
@@ -94,12 +94,12 @@ class Main {
 	static async main(processArgv: string[]): Promise<void> {
 		const program = new Command();
 		program
-			.name('doublure')
-			.description('A coding agent that reads a .doublure folder and runs on any OpenAI API compatible endpoint')
+			.name('code-agent')
+			.description('A coding agent that reads a .code-agent folder and runs on any OpenAI API compatible endpoint')
 			.option('--print <prompt>', 'answer one prompt and exit, printing the answer to the standard output')
-			.option('--list', 'print what was read out of the .doublure folder as JSON, and exit')
+			.option('--list', 'print what was read out of the .code-agent folder as JSON, and exit')
 			.option('--expand <command>', 'print the expanded text of a slash command without calling the model')
-			.option('--resume', 'carry on the newest conversation in .doublure/sessions instead of starting a new one')
+			.option('--resume', 'carry on the newest conversation in .code-agent/sessions instead of starting a new one')
 			.option('--yes', 'approve every permission request instead of asking')
 			.option('--model <name>', 'the identifier of the model to use')
 			.option('--base-url <address>', 'the base address of the OpenAI API compatible endpoint')
@@ -139,7 +139,7 @@ class Main {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Builds the configuration, reads the `.doublure` folder, and assembles everything the modes share.
+	 * Builds the configuration, reads the `.code-agent` folder, and assembles everything the modes share.
 	 *
 	 * @param options What was given on the command line.
 	 * @returns Everything the chosen mode needs.
@@ -155,7 +155,7 @@ class Main {
 
 		ModelProvider.configure(config);
 
-		const content = DoublureFolderReader.read(config.workingDirectoryPath);
+		const content = ConfigFolderReader.read(config.workingDirectoryPath);
 		const permissionPrompt = new PermissionPrompt(config.isPermissionPromptEnabled);
 
 		const toolContext: ToolContext = {
@@ -163,13 +163,13 @@ class Main {
 			permissionAsker: permissionPrompt,
 			logToolCall: (toolName, summary) => {
 				if (config.isToolCallLoggingEnabled === true) {
-					process.stderr.write(`doublure-tool: ${toolName} ${summary}\n`);
+					process.stderr.write(`code-agent-tool: ${toolName} ${summary}\n`);
 				}
 			},
 		};
 
-		const memoryStore = new MemoryStore(Path.join(content.paths.doublureFolderPath, 'memory'));
-		const sessionsFolderPath = Path.join(content.paths.doublureFolderPath, 'sessions');
+		const memoryStore = new MemoryStore(Path.join(content.paths.configFolderPath, 'memory'));
+		const sessionsFolderPath = Path.join(content.paths.configFolderPath, 'sessions');
 		const sessionStore = new SessionStore(sessionsFolderPath);
 
 		const resumedSession = options.resume === true ? sessionStore.loadNewestSession() : null;
@@ -217,7 +217,7 @@ class Main {
 				config.modelName,
 			),
 			inputHistoryStore: new InputHistoryStore(
-				Path.join(content.paths.doublureFolderPath, 'input_history.txt'),
+				Path.join(content.paths.configFolderPath, 'input_history.txt'),
 			),
 		};
 	}
@@ -229,7 +229,7 @@ class Main {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Prints what was read out of the `.doublure` folder as JSON, and returns.
+	 * Prints what was read out of the `.code-agent` folder as JSON, and returns.
 	 *
 	 * The shape printed here is the contract the verification runner reads. It is typed as `ListOutput` in
 	 * `test/libs/verification_types.ts`, which cannot import from here.
@@ -242,7 +242,7 @@ class Main {
 
 		const listOutput = {
 			projectRootPath: content.paths.projectRootPath,
-			doublureFolderPath: content.paths.doublureFolderPath,
+			configFolderPath: content.paths.configFolderPath,
 			instructions:
 				content.instructionDocument === null
 					? null
@@ -290,7 +290,7 @@ class Main {
 			return;
 		}
 
-		process.stderr.write('That command is answered by doublure itself, so it expands to nothing.\n');
+		process.stderr.write('That command is answered by code-agent itself, so it expands to nothing.\n');
 		process.exitCode = 1;
 	}
 
@@ -298,7 +298,7 @@ class Main {
 	 * Answers one prompt and returns.
 	 *
 	 * The answer goes to the standard output and nothing else does, so that a caller reading the standard output
-	 * gets the answer on its own. Anything doublure has to say about its own working goes to the standard error.
+	 * gets the answer on its own. Anything code-agent has to say about its own working goes to the standard error.
 	 *
 	 * @param session Everything built at startup.
 	 * @param prompt The prompt to answer.
@@ -315,7 +315,7 @@ class Main {
 			process.stdout.write('\n');
 		} catch (caughtError) {
 			const reason = caughtError instanceof Error ? caughtError.message : String(caughtError);
-			process.stderr.write(`doublure could not answer: ${reason}\n`);
+			process.stderr.write(`code-agent could not answer: ${reason}\n`);
 			process.exitCode = 1;
 		}
 	}
@@ -355,7 +355,7 @@ class Main {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Makes the interrupt key end doublure without losing the conversation, when there is no interactive loop to
+	 * Makes the interrupt key end code-agent without losing the conversation, when there is no interactive loop to
 	 * handle it. The interactive loop handles its own, so that a first press can warn and a second can leave.
 	 *
 	 * Nothing has to be written here, because the conversation is written to disk before the model is called
@@ -367,17 +367,17 @@ class Main {
 	private static _installInterruptHandler(session: StartedSession): void {
 		process.on('SIGINT', () => {
 			OutputRenderer.writeNotice(
-				`\ndoublure stopped. The conversation so far is in ${session.conversationSession.sessionFilePath}`,
+				`\ncode-agent stopped. The conversation so far is in ${session.conversationSession.sessionFilePath}`,
 			);
 			process.exit(130);
 		});
 	}
 
 	/**
-	 * Writes one line to the standard error saying what doublure can currently do.
+	 * Writes one line to the standard error saying what code-agent can currently do.
 	 *
 	 * The verification runner reads this line to tell a part that is not built yet from a part that is built and
-	 * wrong. Keep the shape in step with the `DoublureCapabilities` type in `test/libs/verification_types.ts`,
+	 * wrong. Keep the shape in step with the `CodeAgentCapabilities` type in `test/libs/verification_types.ts`,
 	 * which cannot import from here.
 	 *
 	 * @param session Everything built at startup.
@@ -389,7 +389,7 @@ class Main {
 			hasMemory: true,
 			hasSessions: true,
 		};
-		process.stderr.write(`doublure-capabilities: ${JSON.stringify(capabilities)}\n`);
+		process.stderr.write(`code-agent-capabilities: ${JSON.stringify(capabilities)}\n`);
 	}
 }
 

@@ -1,7 +1,7 @@
 import Fs from 'node:fs';
 import Path from 'node:path';
 
-import { DoublureRunner } from './doublure_runner.ts';
+import { CodeAgentRunner } from './code_agent_runner.ts';
 import { VerificationHelpers } from './verification_helpers.ts';
 import { VerificationResults, type VerificationResult } from './verification_types.ts';
 
@@ -30,10 +30,10 @@ export class VerificationChecksModel {
 	 * @returns Whether the answer came back.
 	 */
 	static async checkOneShotAnswer(): Promise<VerificationResult> {
-		const folderPath = DoublureRunner.makeFixtureFolder();
+		const folderPath = CodeAgentRunner.makeFixtureFolder();
 
 		try {
-			const outcome = await DoublureRunner.run({
+			const outcome = await CodeAgentRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--print', 'Reply with exactly this one word and nothing else: MARMALADE'],
 			});
@@ -52,7 +52,7 @@ export class VerificationChecksModel {
 
 			return VerificationResults.passed('the model answered through the one-shot mode');
 		} finally {
-			DoublureRunner.removeFolder(folderPath);
+			CodeAgentRunner.removeFolder(folderPath);
 		}
 	}
 
@@ -62,10 +62,10 @@ export class VerificationChecksModel {
 	 * @returns Whether the answer held the secret word from the file.
 	 */
 	static async checkToolCallRead(): Promise<VerificationResult> {
-		const folderPath = DoublureRunner.makeFixtureFolder();
+		const folderPath = CodeAgentRunner.makeFixtureFolder();
 
 		try {
-			const outcome = await DoublureRunner.run({
+			const outcome = await CodeAgentRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--print', 'Read the file secret_note.txt and tell me the secret word it holds.'],
 			});
@@ -93,7 +93,7 @@ export class VerificationChecksModel {
 
 			return VerificationResults.passed('read_file ran and its result reached the answer');
 		} finally {
-			DoublureRunner.removeFolder(folderPath);
+			CodeAgentRunner.removeFolder(folderPath);
 		}
 	}
 
@@ -103,10 +103,10 @@ export class VerificationChecksModel {
 	 * @returns Whether the write was refused.
 	 */
 	static async checkPermissionRefused(): Promise<VerificationResult> {
-		const folderPath = DoublureRunner.makeFixtureFolder();
+		const folderPath = CodeAgentRunner.makeFixtureFolder();
 
 		try {
-			const outcome = await DoublureRunner.run({
+			const outcome = await CodeAgentRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--print', 'Create a file named should_not_exist.txt holding the word hello.'],
 			});
@@ -135,7 +135,7 @@ export class VerificationChecksModel {
 
 			return VerificationResults.passed('the write was refused and the folder was left alone');
 		} finally {
-			DoublureRunner.removeFolder(folderPath);
+			CodeAgentRunner.removeFolder(folderPath);
 		}
 	}
 
@@ -145,10 +145,10 @@ export class VerificationChecksModel {
 	 * @returns Whether the write went through.
 	 */
 	static async checkPermissionAllowed(): Promise<VerificationResult> {
-		const folderPath = DoublureRunner.makeFixtureFolder();
+		const folderPath = CodeAgentRunner.makeFixtureFolder();
 
 		try {
-			const outcome = await DoublureRunner.run({
+			const outcome = await CodeAgentRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: [
 					'--yes',
@@ -181,7 +181,7 @@ export class VerificationChecksModel {
 
 			return VerificationResults.passed('the write went through under --yes');
 		} finally {
-			DoublureRunner.removeFolder(folderPath);
+			CodeAgentRunner.removeFolder(folderPath);
 		}
 	}
 
@@ -191,10 +191,10 @@ export class VerificationChecksModel {
 	 * @returns Whether a memory file and an index line appeared.
 	 */
 	static async checkMemoryWritten(): Promise<VerificationResult> {
-		const folderPath = DoublureRunner.makeFixtureFolder();
+		const folderPath = CodeAgentRunner.makeFixtureFolder();
 
 		try {
-			const outcome = await DoublureRunner.run({
+			const outcome = await CodeAgentRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: [
 					'--yes',
@@ -217,7 +217,7 @@ export class VerificationChecksModel {
 				return capabilityResult;
 			}
 
-			const memoryFolderPath = Path.join(folderPath, '.doublure', 'memory');
+			const memoryFolderPath = Path.join(folderPath, '.code-agent', 'memory');
 			if (Fs.existsSync(memoryFolderPath) === false) {
 				return VerificationResults.failed(
 					'the memory folder does not exist',
@@ -249,7 +249,7 @@ export class VerificationChecksModel {
 
 			return VerificationResults.passed(`${memoryFileNames.join(', ')} was written and indexed`);
 		} finally {
-			DoublureRunner.removeFolder(folderPath);
+			CodeAgentRunner.removeFolder(folderPath);
 		}
 	}
 
@@ -258,15 +258,15 @@ export class VerificationChecksModel {
 	 *
 	 * The question is deliberately about something dull. An earlier version asked for a "passphrase", and a
 	 * cautious model refused to fetch it on the grounds that passphrases are sensitive, so the check was
-	 * measuring the safety posture of the model rather than whether doublure routes to a subagent at all.
+	 * measuring the safety posture of the model rather than whether code-agent routes to a subagent at all.
 	 *
 	 * @returns Whether the codename came back, which is only possible if the subagent really ran.
 	 */
 	static async checkSubagentCalled(): Promise<VerificationResult> {
-		const folderPath = DoublureRunner.makeFixtureFolder();
+		const folderPath = CodeAgentRunner.makeFixtureFolder();
 
 		try {
-			const outcome = await DoublureRunner.run({
+			const outcome = await CodeAgentRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--print', 'What is the release codename of this project?'],
 			});
@@ -294,7 +294,7 @@ export class VerificationChecksModel {
 
 			return VerificationResults.passed('the codename-keeper subagent ran and its answer reached the user');
 		} finally {
-			DoublureRunner.removeFolder(folderPath);
+			CodeAgentRunner.removeFolder(folderPath);
 		}
 	}
 
@@ -307,10 +307,10 @@ export class VerificationChecksModel {
 	 * @returns Whether the greeting from the skill came back.
 	 */
 	static async checkSkillLoaded(): Promise<VerificationResult> {
-		const folderPath = DoublureRunner.makeFixtureFolder();
+		const folderPath = CodeAgentRunner.makeFixtureFolder();
 
 		try {
-			const outcome = await DoublureRunner.run({
+			const outcome = await CodeAgentRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--print', 'How should I greet someone in this project? Use the project greeting.'],
 			});
@@ -338,7 +338,7 @@ export class VerificationChecksModel {
 
 			return VerificationResults.passed('load_skill ran and the instructions of the skill were followed');
 		} finally {
-			DoublureRunner.removeFolder(folderPath);
+			CodeAgentRunner.removeFolder(folderPath);
 		}
 	}
 
@@ -348,10 +348,10 @@ export class VerificationChecksModel {
 	 * @returns Whether a readable session file holding that turn appeared.
 	 */
 	static async checkSessionSaved(): Promise<VerificationResult> {
-		const folderPath = DoublureRunner.makeFixtureFolder();
+		const folderPath = CodeAgentRunner.makeFixtureFolder();
 
 		try {
-			const outcome = await DoublureRunner.run({
+			const outcome = await CodeAgentRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--print', 'Remember the number 8675309 for the rest of this conversation.'],
 			});
@@ -370,7 +370,7 @@ export class VerificationChecksModel {
 				return capabilityResult;
 			}
 
-			const sessionsFolderPath = Path.join(folderPath, '.doublure', 'sessions');
+			const sessionsFolderPath = Path.join(folderPath, '.code-agent', 'sessions');
 			if (Fs.existsSync(sessionsFolderPath) === false) {
 				return VerificationResults.failed(
 					'the sessions folder does not exist',
@@ -410,7 +410,7 @@ export class VerificationChecksModel {
 
 			return VerificationResults.passed(`${sessionFileNames[0]} holds the turn that was just run`);
 		} finally {
-			DoublureRunner.removeFolder(folderPath);
+			CodeAgentRunner.removeFolder(folderPath);
 		}
 	}
 
@@ -420,10 +420,10 @@ export class VerificationChecksModel {
 	 * @returns Whether the second run remembered the first.
 	 */
 	static async checkSessionResumed(): Promise<VerificationResult> {
-		const folderPath = DoublureRunner.makeFixtureFolder();
+		const folderPath = CodeAgentRunner.makeFixtureFolder();
 
 		try {
-			const firstOutcome = await DoublureRunner.run({
+			const firstOutcome = await CodeAgentRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--print', 'My favourite number is 8675309. Just say that you noted it.'],
 			});
@@ -442,7 +442,7 @@ export class VerificationChecksModel {
 				return capabilityResult;
 			}
 
-			const secondOutcome = await DoublureRunner.run({
+			const secondOutcome = await CodeAgentRunner.run({
 				workingDirectoryPath: folderPath,
 				commandLineArguments: ['--resume', '--print', 'What is my favourite number? Answer with the digits only.'],
 			});
@@ -461,7 +461,7 @@ export class VerificationChecksModel {
 
 			return VerificationResults.passed('the second run continued the conversation of the first');
 		} finally {
-			DoublureRunner.removeFolder(folderPath);
+			CodeAgentRunner.removeFolder(folderPath);
 		}
 	}
 }

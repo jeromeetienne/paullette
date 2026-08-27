@@ -5,25 +5,25 @@ import { type ConversationHistoryItem, type StoredSession } from './history_type
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	SessionStore — saves the conversation to .doublure/sessions and reads it back
+//	SessionStore — saves the conversation to .code-agent/sessions and reads it back
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Saves the conversation to `.doublure/sessions` and reads it back.
+ * Saves the conversation to `.code-agent/sessions` and reads it back.
  *
  * The whole conversation is rewritten at the end of every turn rather than appended to, so that a session file
  * is always a complete and readable conversation. A run that is stopped part way through loses at most the turn
  * that was in flight.
  */
 export class SessionStore {
-	/** The absolute path of the `.doublure/sessions` folder. */
+	/** The absolute path of the `.code-agent/sessions` folder. */
 	private readonly _sessionsFolderPath: string;
 
 	/**
 	 * Builds the session store.
 	 *
-	 * @param sessionsFolderPath The absolute path of the `.doublure/sessions` folder.
+	 * @param sessionsFolderPath The absolute path of the `.code-agent/sessions` folder.
 	 */
 	constructor(sessionsFolderPath: string) {
 		this._sessionsFolderPath = sessionsFolderPath;
@@ -32,7 +32,7 @@ export class SessionStore {
 	/**
 	 * Starts a new, empty session.
 	 *
-	 * Nothing is written to disk until the first turn is saved, so starting doublure and quitting without asking
+	 * Nothing is written to disk until the first turn is saved, so starting code-agent and quitting without asking
 	 * anything leaves no file behind.
 	 *
 	 * @param modelName The model the conversation will be held with.

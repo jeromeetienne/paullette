@@ -30,7 +30,7 @@ export class FrontmatterParser {
 	 * Splits the text of a Markdown file into its YAML frontmatter and its body.
 	 *
 	 * A file with no frontmatter, or with frontmatter that is not valid YAML, produces an empty frontmatter and
-	 * the whole text as the body. Doublure never rejects a file over its frontmatter, because a file that only
+	 * the whole text as the body. code-agent never rejects a file over its frontmatter, because a file that only
 	 * holds instructions is still useful.
 	 *
 	 * @param fileText The whole text of the Markdown file.

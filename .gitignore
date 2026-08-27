@@ -13,7 +13,7 @@ dist/
 # Local Claude Code settings for this machine only. The shared settings.json is committed.
 .claude/settings.local.json
 
-# The working folder doublure creates for itself in this repository. It holds local sessions,
+# The working folder code-agent creates for itself in this repository. It holds local sessions,
 # input history, and memory, none of which belong to the project. The committed fixture folder
-# lives at test/fixture/.doublure instead.
-.doublure/
+# lives at test/fixture/.code-agent instead.
+.code-agent/

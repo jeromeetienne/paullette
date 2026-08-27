@@ -7,7 +7,7 @@
 /**
  * What happened when a verification step ran.
  *
- * `passed` and `failed` both mean the step really ran against the code. `pending` means the part of doublure the
+ * `passed` and `failed` both mean the step really ran against the code. `pending` means the part of code-agent the
  * step checks does not exist yet, so the step could not run at all. A pending step is never a failure, and it is
  * never a pass either: it is work still to do.
  */
@@ -107,21 +107,21 @@ export class VerificationResults {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The shape doublure prints when it is given the `--list` option. This is the contract the implementation has to
+ * The shape code-agent prints when it is given the `--list` option. This is the contract the implementation has to
  * meet, and it is written down here because the verification steps are the only thing that reads it.
  */
 export type ListOutput = {
-	/** The folder doublure treated as the project root. */
+	/** The folder code-agent treated as the project root. */
 	projectRootPath: string;
-	/** The absolute path of the `.doublure` folder. */
-	doublureFolderPath: string;
-	/** The instruction document, or null when `.doublure/CLAUDE.md` is absent. */
+	/** The absolute path of the `.code-agent` folder. */
+	configFolderPath: string;
+	/** The instruction document, or null when `.code-agent/CLAUDE.md` is absent. */
 	instructions: { filePath: string; characterCount: number } | null;
-	/** Every subagent read from `.doublure/agents`. */
+	/** Every subagent read from `.code-agent/agents`. */
 	agents: Array<{ name: string; description: string; toolNames: string[] | null }>;
-	/** Every slash command read from `.doublure/commands`. */
+	/** Every slash command read from `.code-agent/commands`. */
 	commands: Array<{ name: string; description: string; argumentHint: string | null }>;
-	/** Every skill read from `.doublure/skills`. */
+	/** Every skill read from `.code-agent/skills`. */
 	skills: Array<{ name: string; description: string }>;
 };
 
@@ -132,25 +132,25 @@ export type ListOutput = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The prefix of the line doublure writes to its standard error on every run, saying what it can currently do.
+ * The prefix of the line code-agent writes to its standard error on every run, saying what it can currently do.
  *
  * This exists so that a check can tell a part that is not built yet from a part that is built and wrong. Without
  * it, a check for the memory tools fails while the memory tools are still unwritten, which reads as a bug and
  * sends a reader off debugging code that does not exist. Worse, a check can pass for the wrong reason: the check
  * that a file write is refused passes on its own while there is no file writing tool at all.
  */
-export const CAPABILITY_LINE_PREFIX = 'doublure-capabilities:';
+export const CAPABILITY_LINE_PREFIX = 'code-agent-capabilities:';
 
 /**
- * What doublure says it can currently do. Written by `src/cli.ts` and read by `DoublureRunner`. The two sides
+ * What code-agent says it can currently do. Written by `src/cli.ts` and read by `CodeAgentRunner`. The two sides
  * are kept in step by hand, because nothing under `test/` may import from `src/`.
  */
-export type DoublureCapabilities = {
+export type CodeAgentCapabilities = {
 	/** The names of the tools the agent was given, which is empty until the tools are built. */
 	toolNames: string[];
-	/** True once doublure reads and writes `.doublure/memory`. */
+	/** True once code-agent reads and writes `.code-agent/memory`. */
 	hasMemory: boolean;
-	/** True once doublure saves the conversation to `.doublure/sessions`. */
+	/** True once code-agent saves the conversation to `.code-agent/sessions`. */
 	hasSessions: boolean;
 };
 
@@ -161,16 +161,16 @@ export type DoublureCapabilities = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The base address of the endpoint the verification steps call. It matches the default of doublure itself.
+ * The base address of the endpoint the verification steps call. It matches the default of code-agent itself.
  */
-export const VERIFICATION_BASE_URL = process.env['DOUBLURE_BASE_URL'] ?? 'http://127.0.0.1:1234/v1';
+export const VERIFICATION_BASE_URL = process.env['CODE_AGENT_BASE_URL'] ?? 'http://127.0.0.1:1234/v1';
 
 /**
- * The model the verification steps call. It matches the default model of doublure itself.
+ * The model the verification steps call. It matches the default model of code-agent itself.
  *
- * These two used to differ: doublure defaulted to `google/gemma-4-e2b`, which cannot produce the four-field
- * JSON object that `memory_write` takes, so the verification steps called `qwen3.5-4b` instead. Doublure now
- * defaults to `qwen3.5-4b` as well, and the two agree again. Set `DOUBLURE_MODEL` to check how a different
+ * These two used to differ: code-agent defaulted to `google/gemma-4-e2b`, which cannot produce the four-field
+ * JSON object that `memory_write` takes, so the verification steps called `qwen3.5-4b` instead. code-agent now
+ * defaults to `qwen3.5-4b` as well, and the two agree again. Set `CODE_AGENT_MODEL` to check how a different
  * model copes.
  */
-export const VERIFICATION_MODEL_NAME = process.env['DOUBLURE_MODEL'] ?? 'qwen3.5-4b';
+export const VERIFICATION_MODEL_NAME = process.env['CODE_AGENT_MODEL'] ?? 'qwen3.5-4b';

@@ -1,6 +1,6 @@
 import Fs from 'node:fs';
 
-import { type CommandDefinition } from '../doublure_folder/doublure_folder_types.ts';
+import { type CommandDefinition } from '../config_folder/config_folder_types.ts';
 import { ShellTools } from '../tools/shell_tools.ts';
 import { ToolPaths } from '../tools/tool_paths.ts';
 import { type ToolContext } from '../tools/tool_types.ts';

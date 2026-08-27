@@ -2,7 +2,7 @@ import Readline from 'node:readline/promises';
 
 import { type Agent } from '@openai/agents';
 
-import { type DoublureConfig } from '../config/config_types.ts';
+import { type CodeAgentConfig } from '../config/config_types.ts';
 import { InputHistoryStore } from '../history/input_history_store.ts';
 import { type ConversationSession } from './conversation_session.ts';
 import { OutputRenderer } from './output_renderer.ts';
@@ -24,8 +24,8 @@ const INPUT_HISTORY_SIZE = 1000;
  * Everything the interactive loop needs.
  */
 export type ReadlineInterfaceRequest = {
-	/** The configuration doublure is running with. */
-	config: DoublureConfig;
+	/** The configuration code-agent is running with. */
+	config: CodeAgentConfig;
 	/** The agent that answers. */
 	agent: Agent;
 	/** The conversation being held. */
@@ -36,7 +36,7 @@ export type ReadlineInterfaceRequest = {
 	permissionPrompt: PermissionPrompt;
 	/** Remembers the typed lines between runs. */
 	inputHistoryStore: InputHistoryStore;
-	/** The folder doublure is working in, shown when the loop starts. */
+	/** The folder code-agent is working in, shown when the loop starts. */
 	projectRootPath: string;
 };
 
@@ -177,7 +177,7 @@ export class ReadlineInterface {
 			OutputRenderer.endAnswer();
 		} catch (caughtError) {
 			const reason = caughtError instanceof Error ? caughtError.message : String(caughtError);
-			OutputRenderer.writeError(`doublure could not answer: ${reason}`);
+			OutputRenderer.writeError(`code-agent could not answer: ${reason}`);
 		}
 	}
 }

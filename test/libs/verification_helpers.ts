@@ -1,7 +1,7 @@
-import { DoublureRunner, type RunOutcome } from './doublure_runner.ts';
+import { CodeAgentRunner, type RunOutcome } from './code_agent_runner.ts';
 import {
 	VerificationResults,
-	type DoublureCapabilities,
+	type CodeAgentCapabilities,
 	type ListOutput,
 	type VerificationResult,
 } from './verification_types.ts';
@@ -18,13 +18,13 @@ import {
  */
 export class VerificationHelpers {
 	/**
-	 * Says whether a run shows that the part of doublure being checked does not exist yet.
+	 * Says whether a run shows that the part of code-agent being checked does not exist yet.
 	 *
 	 * This is what keeps a half built repository readable: a check for something not written yet reports PENDING
 	 * and says which part is missing, instead of reporting a failure that looks like a bug.
 	 *
 	 * @param outcome What the run produced.
-	 * @param missingPartName The name of the part of doublure the check needs, used in the message.
+	 * @param missingPartName The name of the part of code-agent the check needs, used in the message.
 	 * @returns A pending result when the part is missing, and null when the check can carry on.
 	 */
 	static pendingWhenNotReady(outcome: RunOutcome, missingPartName: string): VerificationResult | null {
@@ -32,19 +32,19 @@ export class VerificationHelpers {
 			return VerificationResults.pending('src/cli.ts does not exist yet');
 		}
 
-		if (DoublureRunner.isOptionUnsupported(outcome) === true) {
+		if (CodeAgentRunner.isOptionUnsupported(outcome) === true) {
 			return VerificationResults.pending(`${missingPartName} is not built yet`);
 		}
 
 		if (outcome.isTimedOut === true) {
-			return VerificationResults.failed('doublure did not finish before the timeout ran out');
+			return VerificationResults.failed('code-agent did not finish before the timeout ran out');
 		}
 
 		return null;
 	}
 
 	/**
-	 * Says whether doublure lacks the capability a check needs, so that the check reports PENDING rather than a
+	 * Says whether code-agent lacks the capability a check needs, so that the check reports PENDING rather than a
 	 * failure that reads like a bug.
 	 *
 	 * This also stops a check passing for the wrong reason. The check that a file write is refused would pass on
@@ -58,11 +58,11 @@ export class VerificationHelpers {
 	 */
 	static pendingWhenCapabilityMissing(
 		outcome: RunOutcome,
-		isPresent: (capabilities: DoublureCapabilities) => boolean,
+		isPresent: (capabilities: CodeAgentCapabilities) => boolean,
 		label: string,
 	): VerificationResult | null {
 		if (outcome.capabilities === null) {
-			return VerificationResults.pending('doublure printed no capability line');
+			return VerificationResults.pending('code-agent printed no capability line');
 		}
 
 		if (isPresent(outcome.capabilities) === false) {
@@ -91,7 +91,7 @@ export class VerificationHelpers {
 	/**
 	 * Reads the JSON printed by the `--list` option, ignoring any line printed around it.
 	 *
-	 * @param standardOutput Everything doublure wrote to its standard output.
+	 * @param standardOutput Everything code-agent wrote to its standard output.
 	 * @returns The parsed list, or null when no readable JSON object was found.
 	 */
 	static parseListOutput(standardOutput: string): ListOutput | null {

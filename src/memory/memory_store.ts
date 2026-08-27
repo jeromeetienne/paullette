@@ -1,12 +1,12 @@
 import Fs from 'node:fs';
 import Path from 'node:path';
 
-import { FrontmatterParser } from '../doublure_folder/frontmatter_parser.ts';
+import { FrontmatterParser } from '../config_folder/frontmatter_parser.ts';
 import { memoryEntryTypeSchema, memoryFrontmatterSchema, type MemoryEntry, type MemoryEntryType } from './memory_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	MemoryStore — reads and writes .doublure/memory and keeps its index in step
+//	MemoryStore — reads and writes .code-agent/memory and keeps its index in step
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -21,19 +21,19 @@ const INDEX_FILE_NAME = 'MEMORY.md';
 const INDEX_HEADING = '# Memory';
 
 /**
- * Reads and writes `.doublure/memory`, and keeps `MEMORY.md` in step with the files beside it.
+ * Reads and writes `.code-agent/memory`, and keeps `MEMORY.md` in step with the files beside it.
  *
  * One fact lives in one file. The index holds one line per file, and that index is what goes into the system
  * prompt, so that the agent can see what it knows without every fact being in the prompt at once.
  */
 export class MemoryStore {
-	/** The absolute path of the `.doublure/memory` folder. */
+	/** The absolute path of the `.code-agent/memory` folder. */
 	private readonly _memoryFolderPath: string;
 
 	/**
 	 * Builds the memory store.
 	 *
-	 * @param memoryFolderPath The absolute path of the `.doublure/memory` folder.
+	 * @param memoryFolderPath The absolute path of the `.code-agent/memory` folder.
 	 */
 	constructor(memoryFolderPath: string) {
 		this._memoryFolderPath = memoryFolderPath;

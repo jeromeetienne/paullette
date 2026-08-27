@@ -1,4 +1,4 @@
-import { type DoublureFolderContent } from '../doublure_folder/doublure_folder_types.ts';
+import { type ConfigFolderContent } from '../config_folder/config_folder_types.ts';
 import { type MemoryStore } from '../memory/memory_store.ts';
 import { type ToolContext } from '../tools/tool_types.ts';
 import { CommandExpander } from './command_expander.ts';
@@ -35,7 +35,7 @@ export type ParsedSlashCommand = {
 };
 
 /**
- * The commands doublure answers itself. A command read from `.doublure/commands` never takes one of these names.
+ * The commands code-agent answers itself. A command read from `.code-agent/commands` never takes one of these names.
  */
 const BUILT_IN_NAMES = ['help', 'exit', 'quit', 'clear', 'agents', 'skills', 'commands', 'memory'];
 
@@ -43,8 +43,8 @@ const BUILT_IN_NAMES = ['help', 'exit', 'quit', 'clear', 'agents', 'skills', 'co
  * Deals with a line the user typed that starts with a slash.
  */
 export class SlashCommandHandler {
-	/** Everything read out of the `.doublure` folder. */
-	private readonly _content: DoublureFolderContent;
+	/** Everything read out of the `.code-agent` folder. */
+	private readonly _content: ConfigFolderContent;
 	/** The working folder, the permission asker, and the tool call logger. */
 	private readonly _toolContext: ToolContext;
 	/** The store holding everything remembered about this project. */
@@ -57,14 +57,14 @@ export class SlashCommandHandler {
 	/**
 	 * Builds the slash command handler.
 	 *
-	 * @param content Everything read out of the `.doublure` folder.
+	 * @param content Everything read out of the `.code-agent` folder.
 	 * @param toolContext The working folder, the permission asker, and the tool call logger.
 	 * @param memoryStore The store holding everything remembered about this project.
 	 * @param conversationSession The conversation being held.
 	 * @param modelName The model the conversation is held with.
 	 */
 	constructor(
-		content: DoublureFolderContent,
+		content: ConfigFolderContent,
 		toolContext: ToolContext,
 		memoryStore: MemoryStore,
 		conversationSession: ConversationSession,
@@ -148,7 +148,7 @@ export class SlashCommandHandler {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Deals with one of the commands doublure answers itself.
+	 * Deals with one of the commands code-agent answers itself.
 	 *
 	 * @param parsed The name and the arguments of the command.
 	 * @returns What the command line loop should do next.
@@ -179,7 +179,7 @@ export class SlashCommandHandler {
 			OutputRenderer.writeList(
 				'Subagents',
 				this._content.agentDefinitions.map((definition) => `${definition.name} — ${definition.description}`),
-				'None. Put one in .doublure/agents to add one.',
+				'None. Put one in .code-agent/agents to add one.',
 			);
 			return {
 				kind: 'handled',
@@ -190,7 +190,7 @@ export class SlashCommandHandler {
 			OutputRenderer.writeList(
 				'Skills',
 				this._content.skillDefinitions.map((definition) => `${definition.name} — ${definition.description}`),
-				'None. Put one in .doublure/skills to add one.',
+				'None. Put one in .code-agent/skills to add one.',
 			);
 			return {
 				kind: 'handled',
@@ -215,7 +215,7 @@ export class SlashCommandHandler {
 	}
 
 	/**
-	 * Prints the commands doublure answers itself and the commands read from the `.doublure` folder.
+	 * Prints the commands code-agent answers itself and the commands read from the `.code-agent` folder.
 	 *
 	 * @returns Nothing.
 	 */
@@ -234,12 +234,12 @@ export class SlashCommandHandler {
 		);
 
 		OutputRenderer.writeList(
-			'Commands from .doublure/commands',
+			'Commands from .code-agent/commands',
 			this._content.commandDefinitions.map((definition) => {
 				const hint = definition.argumentHint === undefined ? '' : ` ${definition.argumentHint}`;
 				return `/${definition.name}${hint} — ${definition.description}`;
 			}),
-			'None. Put one in .doublure/commands to add one.',
+			'None. Put one in .code-agent/commands to add one.',
 		);
 	}
 }

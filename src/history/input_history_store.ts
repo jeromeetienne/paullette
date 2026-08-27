@@ -25,7 +25,7 @@ export class InputHistoryStore {
 	/**
 	 * Builds the input history store.
 	 *
-	 * @param filePath The absolute path of `.doublure/input_history.txt`.
+	 * @param filePath The absolute path of `.code-agent/input_history.txt`.
 	 */
 	constructor(filePath: string) {
 		this._filePath = filePath;

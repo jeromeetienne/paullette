@@ -2,13 +2,13 @@ import { z } from 'zod';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	doublure_folder_types — the shapes read out of the .doublure folder
+//	config_folder_types — the shapes read out of the .code-agent folder
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
  * Accepts either a comma separated string or a list of strings, and always produces a list of strings. The
- * frontmatter of a `.doublure` file writes a list of tool names either way, because both spellings appear in the
+ * frontmatter of a `.code-agent` file writes a list of tool names either way, because both spellings appear in the
  * Claude Code files these formats come from.
  */
 const toolNameListSchema = z
@@ -25,21 +25,21 @@ const toolNameListSchema = z
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The Zod schema of the frontmatter of a file in `.doublure/agents`.
+ * The Zod schema of the frontmatter of a file in `.code-agent/agents`.
  */
 export const agentFrontmatterSchema = z.object({
-	/** The name of the subagent. Doublure falls back to the file name when this field is absent. */
+	/** The name of the subagent. code-agent falls back to the file name when this field is absent. */
 	name: z.string().optional(),
 	/** The sentence that tells the main agent when to call this subagent. */
 	description: z.string().optional(),
 	/** The names of the tools this subagent is allowed to call. An absent field means every tool. */
 	tools: toolNameListSchema.optional(),
-	/** The model this subagent asks for. Doublure ignores the value and uses the single configured model. */
+	/** The model this subagent asks for. code-agent ignores the value and uses the single configured model. */
 	model: z.string().optional(),
 });
 
 /**
- * A subagent read from a file in `.doublure/agents`. Doublure turns every subagent definition into a tool that the
+ * A subagent read from a file in `.code-agent/agents`. code-agent turns every subagent definition into a tool that the
  * main agent can call.
  */
 export type AgentDefinition = {
@@ -62,21 +62,21 @@ export type AgentDefinition = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The Zod schema of the frontmatter of a file in `.doublure/commands`.
+ * The Zod schema of the frontmatter of a file in `.code-agent/commands`.
  */
 export const commandFrontmatterSchema = z.object({
 	/** The sentence shown next to the command name in the command list. */
 	description: z.string().optional(),
 	/** The hint shown to the user about the arguments the command expects. */
 	'argument-hint': z.string().optional(),
-	/** The names of the tools the command is allowed to call. Doublure records the value but does not apply it. */
+	/** The names of the tools the command is allowed to call. code-agent records the value but does not apply it. */
 	'allowed-tools': toolNameListSchema.optional(),
-	/** The model the command asks for. Doublure ignores the value and uses the single configured model. */
+	/** The model the command asks for. code-agent ignores the value and uses the single configured model. */
 	model: z.string().optional(),
 });
 
 /**
- * A slash command read from a file in `.doublure/commands`. The user types the name of the command, and doublure
+ * A slash command read from a file in `.code-agent/commands`. The user types the name of the command, and code-agent
  * sends the body of the file to the model as the message of the user.
  */
 export type CommandDefinition = {
@@ -99,19 +99,19 @@ export type CommandDefinition = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The Zod schema of the frontmatter of a `SKILL.md` file in `.doublure/skills`.
+ * The Zod schema of the frontmatter of a `SKILL.md` file in `.code-agent/skills`.
  */
 export const skillFrontmatterSchema = z.object({
-	/** The name of the skill. Doublure falls back to the name of the folder when this field is absent. */
+	/** The name of the skill. code-agent falls back to the name of the folder when this field is absent. */
 	name: z.string().optional(),
 	/** The sentence that tells the agent when to load this skill. */
 	description: z.string().optional(),
-	/** The names of the tools the skill is allowed to call. Doublure records the value but does not apply it. */
+	/** The names of the tools the skill is allowed to call. code-agent records the value but does not apply it. */
 	'allowed-tools': toolNameListSchema.optional(),
 });
 
 /**
- * A skill read from a `SKILL.md` file in `.doublure/skills`. The agent sees the name and the description of every
+ * A skill read from a `SKILL.md` file in `.code-agent/skills`. The agent sees the name and the description of every
  * skill in its system prompt, and reads the instructions only when it calls the `load_skill` tool.
  */
 export type SkillDefinition = {
@@ -132,23 +132,23 @@ export type SkillDefinition = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Where the single `.doublure` folder sits. Doublure reads exactly one folder, at the project root, rather than
+ * Where the single `.code-agent` folder sits. code-agent reads exactly one folder, at the project root, rather than
  * searching a chain of parent folders. See GitHub issue number 1 for why the first version works that way.
  */
-export type DoublureFolderPaths = {
-	/** The absolute path of the folder doublure treats as the root of the project. */
+export type ConfigFolderPaths = {
+	/** The absolute path of the folder code-agent treats as the root of the project. */
 	projectRootPath: string;
-	/** The absolute path of the `.doublure` folder itself. */
-	doublureFolderPath: string;
+	/** The absolute path of the `.code-agent` folder itself. */
+	configFolderPath: string;
 };
 
 /**
- * Everything doublure read out of the `.doublure` folder.
+ * Everything code-agent read out of the `.code-agent` folder.
  */
-export type DoublureFolderContent = {
-	/** Where the `.doublure` folder was found. */
-	paths: DoublureFolderPaths;
-	/** The instruction document, or null when `.doublure/CLAUDE.md` is absent. */
+export type ConfigFolderContent = {
+	/** Where the `.code-agent` folder was found. */
+	paths: ConfigFolderPaths;
+	/** The instruction document, or null when `.code-agent/CLAUDE.md` is absent. */
 	instructionDocument: InstructionDocument | null;
 	/** Every subagent definition, with the name of a subagent appearing at most once. */
 	agentDefinitions: AgentDefinition[];
@@ -163,7 +163,7 @@ export type DoublureFolderContent = {
  * instructions came from.
  */
 export type InstructionDocument = {
-	/** The absolute path of the `CLAUDE.md` file inside the `.doublure` folder. */
+	/** The absolute path of the `CLAUDE.md` file inside the `.code-agent` folder. */
 	filePath: string;
 	/** The whole text of the file. */
 	text: string;
