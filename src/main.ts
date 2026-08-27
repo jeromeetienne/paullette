@@ -1,4 +1,6 @@
 #!/usr/bin/env -S npx tsx
+import Path from 'node:path';
+
 import { run } from '@openai/agents';
 import { Command } from 'commander';
 
@@ -10,6 +12,8 @@ import { ConfigLoader } from './libs/config/config_loader.ts';
 import { type DoublureConfig } from './libs/config/config_types.ts';
 import { DoublureFolderReader } from './libs/doublure_folder/doublure_folder_reader.ts';
 import { type DoublureFolderContent } from './libs/doublure_folder/doublure_folder_types.ts';
+import { MemoryStore } from './libs/memory/memory_store.ts';
+import { MemoryTools } from './libs/tools/memory_tools.ts';
 import { SkillTools } from './libs/tools/skill_tools.ts';
 import { SubagentTools } from './libs/tools/subagent_tools.ts';
 import { ToolRegistry, type BuiltTool } from './libs/tools/tool_registry.ts';
@@ -53,6 +57,8 @@ type StartedSession = {
 	toolContext: ToolContext;
 	/** Every tool the main agent may call, including the skills and the subagents. */
 	tools: BuiltTool[];
+	/** The store holding everything remembered about this project. */
+	memoryStore: MemoryStore;
 };
 
 /**
@@ -135,9 +141,12 @@ class Main {
 			},
 		};
 
+		const memoryStore = new MemoryStore(Path.join(content.paths.doublureFolderPath, 'memory'));
+
 		const ordinaryTools = ToolRegistry.createAll(toolContext);
 		const tools = [
 			...ordinaryTools,
+			...MemoryTools.createAll(toolContext, memoryStore),
 			...SkillTools.createAll(toolContext, content.skillDefinitions),
 			...SubagentTools.createAll({
 				agentDefinitions: content.agentDefinitions,
@@ -151,6 +160,7 @@ class Main {
 			content: content,
 			toolContext: toolContext,
 			tools: tools,
+			memoryStore: memoryStore,
 		};
 	}
 
@@ -216,7 +226,8 @@ class Main {
 			workingDirectoryPath: session.config.workingDirectoryPath,
 			instructionDocument: session.content.instructionDocument,
 			skillDefinitions: session.content.skillDefinitions,
-			memoryIndexText: null,
+			memoryIndexText: session.memoryStore.readIndex(),
+			isMemoryAvailable: true,
 		});
 
 		const agent = AgentBuilder.build({
@@ -262,7 +273,7 @@ class Main {
 	private static _reportCapabilities(session: StartedSession): void {
 		const capabilities = {
 			toolNames: session.tools.map((builtTool) => ('name' in builtTool ? builtTool.name : 'unknown')),
-			hasMemory: false,
+			hasMemory: true,
 			hasSessions: false,
 		};
 		process.stderr.write(`doublure-capabilities: ${JSON.stringify(capabilities)}\n`);

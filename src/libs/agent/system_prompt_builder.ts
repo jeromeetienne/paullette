@@ -19,6 +19,8 @@ export type SystemPromptParts = {
 	skillDefinitions: SkillDefinition[];
 	/** The text of `.doublure/memory/MEMORY.md`, or null when nothing has been remembered yet. */
 	memoryIndexText: string | null;
+	/** True when the memory tools are there, which is what tells the agent it can remember things at all. */
+	isMemoryAvailable: boolean;
 };
 
 /**
@@ -47,6 +49,12 @@ export class SystemPromptBuilder {
 				'Use your tools to look at real files before you answer a question about the project. Never guess at',
 				'the content of a file you have not read. Keep your answers short and say plainly when something',
 				'did not work.',
+				'',
+				'When one of your tools can get you an answer, call it and then answer. Never tell the user to use',
+				'a tool themselves, never say that a tool would be the way to find something out, and never',
+				'describe what a tool would return instead of calling it. Some of your tools are other agents that',
+				'know things you do not; if the name of a tool matches what is being asked for, that tool is where',
+				'the answer is.',
 			].join('\n'),
 		);
 
@@ -78,17 +86,26 @@ export class SystemPromptBuilder {
 			);
 		}
 
-		if (parts.memoryIndexText !== null && parts.memoryIndexText.trim().length > 0) {
-			sections.push(
-				[
-					'# Memory',
+		if (parts.isMemoryAvailable === true) {
+			const memoryLines = [
+				'# Memory',
+				'',
+				'When the user asks you to remember something, or tells you how they want you to work, save it',
+				'with the `memory_write` tool. Save one fact at a time, and do not save what the code or the',
+				'history of the project already says.',
+			];
+
+			if (parts.memoryIndexText !== null && parts.memoryIndexText.trim().length > 0) {
+				memoryLines.push(
 					'',
-					'These are the things you were asked to remember in earlier sessions. Each line links to a file',
-					'you can read with the `memory_read` tool when the line looks relevant.',
+					'These are the things you were asked to remember in earlier sessions. Each line links to a',
+					'file you can read with the `memory_read` tool when the line looks relevant.',
 					'',
 					parts.memoryIndexText.trim(),
-				].join('\n'),
-			);
+				);
+			}
+
+			sections.push(memoryLines.join('\n'));
 		}
 
 		return sections.join('\n\n');

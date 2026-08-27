@@ -25,6 +25,16 @@ const EXIT_STATUS_SOMETHING_FAILED = 1;
 const EXIT_STATUS_WORK_REMAINING = 2;
 
 /**
+ * How many times a check that calls the model is tried before it is called a failure.
+ *
+ * Whether a model chooses to call a tool is not deterministic, so one sample does not settle the question the
+ * check is asking. A check that fails now and then is worse than no check at all: it sends a reader off
+ * debugging code that works. The attempt it passed on is always reported, so that a check which starts needing
+ * two or three attempts is visible rather than quietly flaky.
+ */
+const MAXIMUM_MODEL_ATTEMPT_COUNT = 3;
+
+/**
  * Written over the progress line so that the result of a step replaces it instead of following it. Spaces are
  * used rather than a terminal control sequence, so that the output stays readable when it is piped to a file.
  */
@@ -77,18 +87,7 @@ export class RunVerification {
 				process.stdout.write(`${Chalk.dim('running')} ${step.name} …`);
 			}
 
-			let result: VerificationResult;
-			try {
-				result = await step.run();
-			} catch (caughtError) {
-				const reason =
-					caughtError instanceof Error ? caughtError.stack ?? caughtError.message : String(caughtError);
-				result = {
-					outcome: 'failed',
-					detail: 'the step threw before it could reach a verdict',
-					evidence: reason,
-				};
-			}
+			const result = await RunVerification._runWithRetries(step);
 
 			if (isTerminal === true) {
 				process.stdout.write(CLEAR_LINE);
@@ -119,6 +118,61 @@ export class RunVerification {
 	//	Helpers
 	///////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Runs one check, trying again when it calls the model and failed.
+	 *
+	 * @param step The check to run.
+	 * @returns What happened, with the attempt it settled on named in the detail when it took more than one.
+	 */
+	private static async _runWithRetries(step: VerificationStep): Promise<VerificationResult> {
+		const maximumAttemptCount = step.isModelNeeded === true ? MAXIMUM_MODEL_ATTEMPT_COUNT : 1;
+		let result: VerificationResult = {
+			outcome: 'failed',
+			detail: 'the step never ran',
+		};
+
+		for (let attemptNumber = 1; attemptNumber <= maximumAttemptCount; attemptNumber += 1) {
+			result = await RunVerification._runOnce(step);
+
+			if (result.outcome !== 'failed') {
+				if (attemptNumber > 1) {
+					return {
+						...result,
+						detail: `${result.detail} (on attempt ${attemptNumber} of ${maximumAttemptCount})`,
+					};
+				}
+				return result;
+			}
+		}
+
+		if (maximumAttemptCount > 1) {
+			return {
+				...result,
+				detail: `${result.detail} (failed all ${maximumAttemptCount} attempts)`,
+			};
+		}
+		return result;
+	}
+
+	/**
+	 * Runs one check once, turning anything thrown into a failure rather than letting it end the whole run.
+	 *
+	 * @param step The check to run.
+	 * @returns What happened.
+	 */
+	private static async _runOnce(step: VerificationStep): Promise<VerificationResult> {
+		try {
+			return await step.run();
+		} catch (caughtError) {
+			const reason = caughtError instanceof Error ? (caughtError.stack ?? caughtError.message) : String(caughtError);
+			return {
+				outcome: 'failed',
+				detail: 'the step threw before it could reach a verdict',
+				evidence: reason,
+			};
+		}
+	}
 
 	/**
 	 * Reads the options out of the command line arguments.

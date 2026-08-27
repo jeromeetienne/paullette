@@ -254,9 +254,13 @@ export class VerificationChecksModel {
 	}
 
 	/**
-	 * Asks for the project passphrase, which exists only inside the fixture subagent.
+	 * Asks for the release codename, which exists only inside the fixture subagent.
 	 *
-	 * @returns Whether the passphrase came back, which is only possible if the subagent really ran.
+	 * The question is deliberately about something dull. An earlier version asked for a "passphrase", and a
+	 * cautious model refused to fetch it on the grounds that passphrases are sensitive, so the check was
+	 * measuring the safety posture of the model rather than whether doublure routes to a subagent at all.
+	 *
+	 * @returns Whether the codename came back, which is only possible if the subagent really ran.
 	 */
 	static async checkSubagentCalled(): Promise<VerificationResult> {
 		const folderPath = DoublureRunner.makeFixtureFolder();
@@ -264,7 +268,7 @@ export class VerificationChecksModel {
 		try {
 			const outcome = await DoublureRunner.run({
 				workingDirectoryPath: folderPath,
-				commandLineArguments: ['--print', 'What is the project passphrase?'],
+				commandLineArguments: ['--print', 'What is the release codename of this project?'],
 			});
 
 			const pendingResult = VerificationHelpers.pendingWhenNotReady(outcome, 'the subagent tools');
@@ -274,8 +278,8 @@ export class VerificationChecksModel {
 
 			const capabilityResult = VerificationHelpers.pendingWhenCapabilityMissing(
 				outcome,
-				(capabilities) => capabilities.toolNames.includes('secret_keeper') === true,
-				'the secret-keeper subagent tool',
+				(capabilities) => capabilities.toolNames.includes('codename_keeper') === true,
+				'the codename-keeper subagent tool',
 			);
 			if (capabilityResult !== null) {
 				return capabilityResult;
@@ -283,12 +287,12 @@ export class VerificationChecksModel {
 
 			if (outcome.standardOutput.toUpperCase().includes('ELDERBERRY') === false) {
 				return VerificationResults.failed(
-					'the passphrase did not come back, so the secret-keeper subagent did not run',
+					'the release codename did not come back, so the codename-keeper subagent did not run',
 					VerificationHelpers.describeOutcome(outcome),
 				);
 			}
 
-			return VerificationResults.passed('the secret-keeper subagent ran and its answer reached the user');
+			return VerificationResults.passed('the codename-keeper subagent ran and its answer reached the user');
 		} finally {
 			DoublureRunner.removeFolder(folderPath);
 		}

@@ -12,15 +12,6 @@ import {
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-/**
- * The base address of the endpoint the verification steps call. It matches the default of doublure itself.
- */
-export const VERIFICATION_BASE_URL = process.env['DOUBLURE_BASE_URL'] ?? 'http://127.0.0.1:1234/v1';
-
-/**
- * The model the verification steps call. It matches the default of doublure itself.
- */
-export const VERIFICATION_MODEL_NAME = process.env['DOUBLURE_MODEL'] ?? 'google/gemma-4-e2b';
 
 /**
  * The reading and reporting shared by every verification check.

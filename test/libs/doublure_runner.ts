@@ -3,7 +3,12 @@ import Fs from 'node:fs';
 import Os from 'node:os';
 import Path from 'node:path';
 
-import { CAPABILITY_LINE_PREFIX, type DoublureCapabilities } from './verification_types.ts';
+import {
+	CAPABILITY_LINE_PREFIX,
+	VERIFICATION_BASE_URL,
+	VERIFICATION_MODEL_NAME,
+	type DoublureCapabilities,
+} from './verification_types.ts';
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
@@ -102,6 +107,8 @@ export class DoublureRunner {
 					env: {
 						...process.env,
 						NO_COLOR: '1',
+						DOUBLURE_BASE_URL: VERIFICATION_BASE_URL,
+						DOUBLURE_MODEL: VERIFICATION_MODEL_NAME,
 					},
 				},
 			);

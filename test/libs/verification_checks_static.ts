@@ -4,8 +4,13 @@ import Path from 'node:path';
 
 import { DoublureRunner } from './doublure_runner.ts';
 import { EndpointProbe } from './endpoint_probe.ts';
-import { VERIFICATION_BASE_URL, VERIFICATION_MODEL_NAME, VerificationHelpers } from './verification_helpers.ts';
-import { VerificationResults, type VerificationResult } from './verification_types.ts';
+import { VerificationHelpers } from './verification_helpers.ts';
+import {
+	VERIFICATION_BASE_URL,
+	VERIFICATION_MODEL_NAME,
+	VerificationResults,
+	type VerificationResult,
+} from './verification_types.ts';
 
 const __filename = import.meta.filename;
 const __dirname = import.meta.dirname;
@@ -148,8 +153,8 @@ export class VerificationChecksStatic {
 			if (listOutput.instructions === null || listOutput.instructions.characterCount === 0) {
 				complaints.push('the instruction document was not loaded');
 			}
-			if (listOutput.agents.some((agent) => agent.name === 'secret-keeper') === false) {
-				complaints.push('the secret-keeper subagent was not loaded');
+			if (listOutput.agents.some((agent) => agent.name === 'codename-keeper') === false) {
+				complaints.push('the codename-keeper subagent was not loaded');
 			}
 			if (listOutput.commands.some((command) => command.name === 'greet') === false) {
 				complaints.push('the greet command was not loaded');

@@ -153,3 +153,27 @@ export type DoublureCapabilities = {
 	/** True once doublure saves the conversation to `.doublure/sessions`. */
 	hasSessions: boolean;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//	The Endpoint And The Model Under Test
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * The base address of the endpoint the verification steps call. It matches the default of doublure itself.
+ */
+export const VERIFICATION_BASE_URL = process.env['DOUBLURE_BASE_URL'] ?? 'http://127.0.0.1:1234/v1';
+
+/**
+ * The model the verification steps call.
+ *
+ * This is deliberately not the default model of doublure itself. Doublure defaults to `google/gemma-4-e2b`,
+ * which answers well and calls a one-argument tool reliably, but cannot reliably produce the four-field JSON
+ * object that `memory_write` takes: it emits malformed JSON and the call never reaches the tool. Verifying
+ * against it would leave a working feature reported as broken.
+ *
+ * The verification model is therefore the strongest small model installed here. Set `DOUBLURE_MODEL` to check
+ * how a different one copes.
+ */
+export const VERIFICATION_MODEL_NAME = process.env['DOUBLURE_MODEL'] ?? 'qwen3.5-4b';

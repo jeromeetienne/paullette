@@ -4,4 +4,4 @@ This is the instruction document of the verification fixture. A verification ste
 `--list` option to prove that doublure loaded it.
 
 - Answer in one short sentence.
-- Never invent a passphrase. Ask the secret-keeper subagent for it.
+- Never invent a release codename. Ask the codename-keeper subagent for it.

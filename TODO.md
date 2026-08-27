@@ -67,9 +67,9 @@ The goal is the smallest thing that proves the whole chain works: command line t
 
 ## Milestone 4 — memory
 
-- [ ] `src/libs/memory/memory_types.ts` and `memory_store.ts`
-- [ ] `src/libs/tools/memory_tools.ts` — `memory_list`, `memory_read`, `memory_write`, `memory_delete`
-- [ ] The `MEMORY.md` index in the system prompt → verification step `memoryWritten`
+- [x] `src/libs/memory/memory_types.ts` and `memory_store.ts`
+- [x] `src/libs/tools/memory_tools.ts` — `memory_list`, `memory_read`, `memory_write`, `memory_delete`
+- [x] The `MEMORY.md` index in the system prompt → verification step `memoryWritten`
 
 ## Milestone 5 — history on disk
 
@@ -103,3 +103,19 @@ Write anything surprising here: a verification step that needed a different mode
 Milestone 1 made `--print` work, and that turned five PENDING steps into FAIL even though none of those parts had been written. One of them was worse than noise: `permissionRefused` passed, because it checks that no file was written without `--yes`, and no file was written for the simple reason that there was no file writing tool at all. A check that passes while the thing it checks does not exist is a false green, which is the one failure this harness exists to prevent.
 
 The capability line above is the fix. Every check that calls the model now asks what doublure can do before it judges what doublure did.
+
+### Which model the verification runs against, changed during Milestone 4
+
+The verification runner used to call `google/gemma-4-e2b`, the default model of doublure. Milestone 4 showed that it cannot call `memory_write`: it emits malformed JSON for a four-field tool call, so the call never reaches the tool at all. The same code passes on `qwen3.5-4b` first time. The memory store is not at fault, and reshaping a sound tool to suit a two billion parameter model would have been the wrong trade, so the verification runner now calls `qwen3.5-4b` and doublure keeps `google/gemma-4-e2b` as its own default.
+
+This is worth knowing beyond the harness: doublure's default model handles a one-argument tool well and a four-argument tool badly. Whether that default should change is a real question, not a test detail.
+
+Setting `DOUBLURE_MODEL` still overrides both.
+
+### A check that was measuring the wrong thing
+
+The subagent check used to ask for the "project passphrase". `qwen3.5-4b` refused to fetch it, answering that passphrases are sensitive and naming the tool instead of calling it. The check was measuring how cautious the model is about secrets, not whether doublure routes a question to a subagent. It now asks for a release codename, which is dull enough to answer, and it passes.
+
+### Model checks are tried more than once
+
+Whether a model chooses to call a tool is not deterministic, so one sample does not settle what a check is asking. A check that calls the model is now tried up to three times, and the attempt it passed on is printed whenever it took more than one, so a check that starts needing three attempts is visible rather than quietly flaky.
