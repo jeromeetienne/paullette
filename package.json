@@ -1,6 +1,6 @@
 {
 	"name": "paullette",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "An AI coding agent command line interface, compatible with the .claude folder, running on any OpenAI API compatible endpoint",
 	"type": "module",
 	"license": "MIT",
