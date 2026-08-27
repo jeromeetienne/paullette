@@ -1,0 +1,33 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(npm run:*)",
+			"Bash(npm test:*)",
+			"Bash(npm install)",
+			"Bash(npm ci)",
+			"Bash(npx tsx:*)",
+			"Bash(npx tsc:*)",
+			"Bash(git status:*)",
+			"Bash(git diff:*)",
+			"Bash(git log:*)",
+			"Bash(git show:*)",
+			"Bash(git branch:*)",
+			"Bash(git add:*)",
+			"Bash(ls:*)",
+			"Bash(find:*)",
+			"Bash(grep:*)",
+			"Bash(cat:*)",
+			"Bash(head:*)",
+			"Bash(tail:*)",
+			"Bash(wc:*)",
+			"Bash(mkdir:*)"
+		],
+		"deny": [
+			"Bash(git push:*)",
+			"Bash(git reset --hard:*)",
+			"Bash(git clean:*)",
+			"Bash(rm -rf:*)",
+			"Bash(sudo:*)"
+		]
+	}
+}

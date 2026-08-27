@@ -1,0 +1,34 @@
+{
+	"name": "doublure",
+	"version": "0.1.0",
+	"description": "An AI coding agent command line interface, compatible with the .claude folder, running on any OpenAI API compatible endpoint",
+	"type": "module",
+	"license": "MIT",
+	"bin": {
+		"doublure": "./src/main.ts"
+	},
+	"scripts": {
+		"start": "tsx ./src/main.ts",
+		"doublure": "tsx ./src/main.ts",
+		"typecheck": "tsc --noEmit",
+		"verify": "tsx ./test/run_verification.ts",
+		"verify:fast": "tsx ./test/run_verification.ts --fast",
+		"test": "tsx ./test/run_verification.ts"
+	},
+	"dependencies": {
+		"@openai/agents": "^0.17.0",
+		"chalk": "^6.0.0",
+		"commander": "^15.0.0",
+		"openai": "^7.7.0",
+		"yaml": "^2.9.0",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@types/node": "^26.4.0",
+		"tsx": "^4.23.12",
+		"typescript": "^5.9.3"
+	},
+	"engines": {
+		"node": ">=20.11.0"
+	}
+}
