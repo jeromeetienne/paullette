@@ -1,3 +1,4 @@
+import Express from 'express';
 import Http from 'node:http';
 
 import { type WebConversation } from './web_conversation.ts';
@@ -7,7 +8,7 @@ import { WebRouter } from './web_router.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	WebServer — builds the node:http server, listens, and closes
+//	WebServer — builds the Express application, listens, and closes
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -30,17 +31,15 @@ export type WebServerRequest = {
 /**
  * The web server of paullette.
  *
- * It is the `node:http` module of Node.js and nothing else. No web server library is used, because the whole of
- * what this serves is a handful of files, one stream, and four short requests; that was proved live before this
- * was written, and the reasons are in the plan on issue 9.
+ * It is an Express application served by the `node:http` module of Node.js. Nothing is added to Express beyond
+ * the router, no compression above all: the stream at `/api/events` has to reach the browser as each event is
+ * written, and a compressor holds what it is given until it has enough of it to be worth compressing.
  */
 export class WebServer {
 	/** Everything the server needs. */
 	private readonly _request: WebServerRequest;
 	/** The server itself. */
 	private readonly _server: Http.Server;
-	/** The router, built once. */
-	private readonly _router: WebRouter;
 
 	/**
 	 * Builds the server. Nothing listens until `listen` is called.
@@ -49,10 +48,12 @@ export class WebServer {
 	 */
 	constructor(request: WebServerRequest) {
 		this._request = request;
-		this._router = new WebRouter(request.conversation, request.eventStream);
-		this._server = Http.createServer((incomingMessage, serverResponse) => {
-			void this._answer(incomingMessage, serverResponse);
-		});
+
+		const application = Express();
+		application.disable('x-powered-by');
+		application.use(new WebRouter(request.conversation, request.eventStream).build());
+
+		this._server = Http.createServer(application);
 	}
 
 	/**
@@ -91,50 +92,5 @@ export class WebServer {
 		await new Promise<void>((resolve) => {
 			this._server.close(() => resolve());
 		});
-	}
-
-	///////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////
-	//	Helpers
-	///////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////
-
-	/**
-	 * Answers one request, and never lets anything thrown out of a route reach the runtime.
-	 *
-	 * @param incomingMessage The request the browser made.
-	 * @param serverResponse The answer being written.
-	 * @returns Nothing.
-	 */
-	private async _answer(
-		incomingMessage: Http.IncomingMessage,
-		serverResponse: Http.ServerResponse,
-	): Promise<void> {
-		try {
-			const answer = await this._router.route(incomingMessage, serverResponse);
-
-			if (answer === null) {
-				return;
-			}
-
-			serverResponse.writeHead(answer.statusCode, {
-				'content-type': answer.contentType,
-				'cache-control': 'no-store',
-			});
-			serverResponse.end(answer.content);
-		} catch (caughtError) {
-			const reason = caughtError instanceof Error ? caughtError.message : String(caughtError);
-			process.stderr.write(`paullette-web: the request could not be answered: ${reason}\n`);
-
-			if (serverResponse.headersSent === false) {
-				serverResponse.writeHead(500, {
-					'content-type': 'application/json; charset=utf-8',
-				});
-				serverResponse.end(JSON.stringify({ error: 'The request could not be answered.' }));
-				return;
-			}
-
-			serverResponse.end();
-		}
 	}
 }

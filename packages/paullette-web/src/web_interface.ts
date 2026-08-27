@@ -14,9 +14,9 @@ import { WebServer } from './server/web_server.ts';
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The default port, which is the one the example in issue 2 shows.
+ * The default port.
  */
-export const DEFAULT_WEB_PORT = 3000;
+export const DEFAULT_WEB_PORT = 5000;
 
 /**
  * The default address to listen on. It is the loopback address, because the agent behind this server runs shell

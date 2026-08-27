@@ -8,8 +8,8 @@ Holds the unit test suite of the `paullette-web` package: one test file per sour
 - Command to run this folder: `npm run test:unit --workspace paullette-web`.
 
 ## Rules
-- A test here never calls a model and never reaches the network, so the whole folder runs in seconds and needs no local endpoint running.
-- A test never starts the web server on a fixed port. It calls the router, the permission asker, and the static file server directly, so that two test runs at once cannot collide.
+- A test here never calls a model and never reaches a machine other than this one, so the whole folder runs in seconds and needs no local endpoint running.
+- A test never starts the web server on a fixed port. `web_router_test.ts` starts the Express application on the port the operating system gives it and asks it over the network, and every other test calls the permission asker and the static file server directly, so that two test runs at once cannot collide.
 - A test never writes into the repository. It writes into a folder made by `TemporaryFolder`, and removes it in an `afterEach`.
 - The shared test helpers are reached as `paullette-core/test_helpers/<file name>`, never through a relative path that climbs out of `packages/paullette-web`. They are not copied here; the one copy lives in `packages/paullette-core/test/libs/`.
 

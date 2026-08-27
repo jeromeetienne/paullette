@@ -5,6 +5,9 @@
 	configuration of this repository declares no browser library and a Node.js package should not start declaring
 	one. See packages/paullette-web/CONTEXT.md.
 
+	Every element built here is given Bootstrap classes, which is where everything the page looks like comes from.
+	The three rules of paullette.css are the whole of what is written by hand, and each one says why.
+
 	Everything this page shows about a turn arrives over one server-sent events stream at /api/events. Everything
 	the page has to say goes back in an ordinary request.
 */
@@ -45,7 +48,8 @@
 
 	function writeStatus(text, isError) {
 		statusElement.textContent = text;
-		statusElement.classList.toggle('is-error', isError === true);
+		statusElement.classList.toggle('text-danger', isError === true);
+		statusElement.classList.toggle('text-body-secondary', isError !== true);
 	}
 
 	function hideEmptyNote() {
@@ -67,14 +71,15 @@
 		hideEmptyNote();
 
 		var messageElementToAdd = document.createElement('article');
-		messageElementToAdd.className = 'message message-' + role;
+		messageElementToAdd.className = 'row g-2';
 
 		var whoElement = document.createElement('div');
-		whoElement.className = 'message-who';
+		whoElement.className =
+			'col-3 col-sm-2 small text-uppercase ' + (role === 'user' ? 'text-primary' : 'text-body-secondary');
 		whoElement.textContent = role === 'user' ? 'you' : 'paullette';
 
 		var bodyElement = document.createElement('div');
-		bodyElement.className = 'message-body';
+		bodyElement.className = 'col message-body text-break';
 		bodyElement.innerHTML = html;
 
 		messageElementToAdd.appendChild(whoElement);
@@ -88,7 +93,7 @@
 		hideEmptyNote();
 
 		var lineElement = document.createElement('div');
-		lineElement.className = 'tool-line';
+		lineElement.className = 'font-monospace small text-warning-emphasis';
 		lineElement.textContent = text;
 		conversationElement.appendChild(lineElement);
 		scrollToBottom();
@@ -257,6 +262,7 @@
 			.then(function (body) {
 				if (body.sessions === undefined || body.sessions.length === 0) {
 					var emptyItem = document.createElement('li');
+					emptyItem.className = 'list-group-item text-body-secondary';
 					emptyItem.textContent = 'There is no saved conversation yet.';
 					sessionsListElement.appendChild(emptyItem);
 					return;
@@ -264,15 +270,18 @@
 
 				body.sessions.forEach(function (session) {
 					var listItem = document.createElement('li');
+					listItem.className = 'list-group-item p-0';
+
 					var openButton = document.createElement('button');
 					openButton.type = 'button';
+					openButton.className = 'btn btn-link text-body text-decoration-none text-start w-100 py-2';
 
 					var whenElement = document.createElement('div');
-					whenElement.className = 'sessions-when';
+					whenElement.className = 'font-monospace';
 					whenElement.textContent = session.startedAt;
 
 					var aboutElement = document.createElement('div');
-					aboutElement.className = 'sessions-about';
+					aboutElement.className = 'small text-body-secondary';
 					aboutElement.textContent = session.modelName + ' — ' + session.itemCount + ' items';
 
 					openButton.appendChild(whenElement);
@@ -319,7 +328,7 @@
 
 				if (state.messages.length === 0) {
 					var noteElement = document.createElement('p');
-					noteElement.className = 'empty-note';
+					noteElement.className = 'm-0 fst-italic text-body-secondary';
 					noteElement.textContent = 'Ask paullette something.';
 					conversationElement.appendChild(noteElement);
 					emptyNoteElement = noteElement;

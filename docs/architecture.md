@@ -29,7 +29,7 @@ That one import specifier has to resolve three different ways: to the TypeScript
 ```mermaid
 flowchart TD
 	CLI["paullette-cli — the terminal<br/>cli.ts, the read and answer loop,<br/>the permission prompt, the slash commands"]
-	WEB["paullette-web — the browser<br/>the node:http server, the routes,<br/>the stream, the permission form"]
+	WEB["paullette-web — the browser<br/>the Express server, the routes,<br/>the stream, the permission form"]
 	CORE["paullette-core — no user interface"]
 	AGENT["agent — the endpoint, the system prompt, the agent object"]
 	TOOLS["tools — the built-in tools and the permission interface"]
@@ -81,8 +81,8 @@ Each of those folders carries its own `CONTEXT.md` saying what may be imported f
 | File or folder | What it is responsible for |
 | --- | --- |
 | `src/web_interface.ts` | `WebInterface.start()`, the one thing `paullette-cli` imports from this package. |
-| `src/server/` | The `node:http` server, the routes, the one shared conversation, the server-sent events stream, the permission asker the browser answers, the Markdown, and the serving of `public/`. |
-| `public/` | The page, the stylesheet, and the script. Plain files, sent to the browser as they are. |
+| `src/server/` | The Express application, the routes, the one shared conversation, the server-sent events stream, the permission asker the browser answers, the Markdown, and the serving of the files the browser asks for. |
+| `public/` | The page, the three stylesheet rules Bootstrap cannot reach, and the script. Plain files, sent to the browser as they are. Bootstrap itself is served out of `node_modules/bootstrap`. |
 
 The full account of the web interface is in [`web_interface.md`](web_interface.md).
 

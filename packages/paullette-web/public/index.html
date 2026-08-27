@@ -4,54 +4,95 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>paullette</title>
+		<link rel="stylesheet" href="/bootstrap.css" />
 		<link rel="stylesheet" href="/paullette.css" />
+		<script>
+			/*
+				Bootstrap reads the colour scheme off this attribute and follows the setting of the machine on
+				its own for nothing. This runs here, before the page is drawn, so that a person who has asked
+				for a dark screen is never shown a white one first.
+			*/
+			(function () {
+				var darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+				function followTheMachine() {
+					document.documentElement.setAttribute(
+						'data-bs-theme',
+						darkQuery.matches === true ? 'dark' : 'light',
+					);
+				}
+
+				darkQuery.addEventListener('change', followTheMachine);
+				followTheMachine();
+			})();
+		</script>
 	</head>
-	<body>
-		<header class="header">
-			<h1 class="header-name">paullette</h1>
-			<dl class="header-facts">
-				<dt>model</dt>
-				<dd id="model-name">…</dd>
-				<dt>folder</dt>
-				<dd id="working-directory-path">…</dd>
-				<dt>conversation</dt>
-				<dd id="session-identifier">…</dd>
+	<body class="container-md py-3">
+		<header class="d-flex flex-wrap align-items-baseline gap-2 column-gap-4 border-bottom pb-2 mb-3">
+			<h1 class="h5 m-0">paullette</h1>
+			<dl class="d-flex flex-wrap align-items-baseline gap-1 column-gap-3 m-0 small text-body-secondary">
+				<dt class="fw-normal text-uppercase">model</dt>
+				<dd class="m-0 font-monospace text-body" id="model-name">…</dd>
+				<dt class="fw-normal text-uppercase">folder</dt>
+				<dd class="m-0 font-monospace text-body" id="working-directory-path">…</dd>
+				<dt class="fw-normal text-uppercase">conversation</dt>
+				<dd class="m-0 font-monospace text-body" id="session-identifier">…</dd>
 			</dl>
-			<button type="button" id="sessions-button" class="sessions-button">past conversations</button>
+			<button type="button" id="sessions-button" class="btn btn-sm btn-outline-secondary ms-auto">
+				past conversations
+			</button>
 		</header>
 
-		<main class="conversation" id="conversation" aria-live="polite">
-			<p class="empty-note" id="empty-note">Ask paullette something.</p>
+		<main class="d-flex flex-column gap-3 py-2" id="conversation" aria-live="polite">
+			<p class="m-0 fst-italic text-body-secondary" id="empty-note">Ask paullette something.</p>
 		</main>
 
-		<section class="permission" id="permission" hidden>
-			<h2 class="permission-title">paullette wants to <span id="permission-summary"></span></h2>
-			<pre class="permission-detail" id="permission-detail" hidden></pre>
-			<div class="permission-buttons">
-				<button type="button" id="permission-allow" class="allow">allow</button>
-				<button type="button" id="permission-always" class="always">always allow this tool</button>
-				<button type="button" id="permission-refuse" class="refuse">refuse</button>
+		<section class="card border-warning mb-3" id="permission" hidden>
+			<div class="card-body">
+				<h2 class="card-title h6">paullette wants to <span id="permission-summary"></span></h2>
+				<pre
+					class="bg-body-tertiary border rounded p-2 mb-3 small"
+					id="permission-detail"
+					hidden
+				></pre>
+				<div class="d-flex flex-wrap gap-2">
+					<button type="button" id="permission-allow" class="btn btn-sm btn-outline-success">
+						allow
+					</button>
+					<button type="button" id="permission-always" class="btn btn-sm btn-outline-secondary">
+						always allow this tool
+					</button>
+					<button type="button" id="permission-refuse" class="btn btn-sm btn-outline-danger">
+						refuse
+					</button>
+				</div>
 			</div>
 		</section>
 
-		<form class="composer" id="composer">
+		<form class="d-flex align-items-end gap-2" id="composer">
 			<textarea
 				id="message"
-				class="composer-message"
+				class="form-control"
 				rows="3"
 				placeholder="Ask paullette something. Press Enter to send, Shift and Enter for a new line."
 				autofocus
 			></textarea>
-			<button type="submit" id="send-button" class="composer-send">send</button>
+			<button type="submit" id="send-button" class="btn btn-primary">send</button>
 		</form>
 
-		<p class="status" id="status" role="status"></p>
+		<p class="small text-body-secondary mt-2 mb-0" id="status" role="status"></p>
 
-		<dialog class="sessions" id="sessions-dialog">
-			<h2 class="sessions-title">Past conversations</h2>
-			<ul class="sessions-list" id="sessions-list"></ul>
-			<div class="sessions-shown" id="sessions-shown" hidden></div>
-			<button type="button" id="sessions-close" class="sessions-close">close</button>
+		<dialog class="p-0 border-0 bg-transparent overflow-auto" id="sessions-dialog">
+			<div class="card">
+				<div class="card-body">
+					<h2 class="card-title h6">Past conversations</h2>
+					<ul class="list-group list-group-flush mb-3" id="sessions-list"></ul>
+					<div class="border-top pt-3 mb-3" id="sessions-shown" hidden></div>
+					<button type="button" id="sessions-close" class="btn btn-sm btn-outline-secondary">
+						close
+					</button>
+				</div>
+			</div>
 		</dialog>
 
 		<script src="/paullette.js"></script>

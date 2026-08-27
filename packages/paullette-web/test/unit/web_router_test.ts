@@ -1,7 +1,7 @@
 import Assert from 'node:assert/strict';
-import type Http from 'node:http';
+import Express from 'express';
+import Http from 'node:http';
 import Path from 'node:path';
-import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
 import { AgentBuilder } from 'paullette-core/agent/agent_builder';
@@ -25,61 +25,28 @@ import { WebRouter } from '../../src/server/web_router.ts';
  */
 const MODEL_NAME = 'a-model-that-is-never-called';
 
-/**
- * Builds a request as `node:http` would hand it to the server.
- *
- * @param method The method of the request.
- * @param url The path of the request.
- * @param body What the browser sent, or undefined for a request with no body.
- * @returns The request.
- */
-const makeRequest = (method: string, url: string, body?: string): Http.IncomingMessage => {
-	const incomingMessage = Readable.from(body === undefined ? [] : [body]) as Http.IncomingMessage;
-	incomingMessage.method = method;
-	incomingMessage.url = url;
-	return incomingMessage;
-};
-
-/**
- * Builds the smallest answer object the stream route needs, and remembers what was written to it.
- *
- * @returns The answer object, and what it was given.
- */
-const makeResponse = (): { serverResponse: Http.ServerResponse; written: string[] } => {
-	const written: string[] = [];
-	const serverResponse = {
-		writeHead: () => serverResponse,
-		write: (chunk: string) => {
-			written.push(chunk);
-			return true;
-		},
-		end: () => serverResponse,
-		on: () => serverResponse,
-	} as unknown as Http.ServerResponse;
-
-	return {
-		serverResponse: serverResponse,
-		written: written,
-	};
-};
-
-describe('WebRouter.route', () => {
+describe('The routes of the web interface', () => {
 	/** The folder the session store writes into, removed after each test. */
 	let temporaryFolderPath: string;
-	/** The router under test. */
-	let webRouter: WebRouter;
+	/** The server the requests of the tests are made against, listening on a port the operating system chose. */
+	let server: Http.Server;
+	/** The address the server is listening at, for example `http://127.0.0.1:51244`. */
+	let address: string;
 	/** The conversation the router answers about. */
 	let webConversation: WebConversation;
 	/** The asker a permission answer has to reach. */
 	let webPermissionAsker: WebPermissionAsker;
+	/** The streams the route at `/api/events` opens, closed after each test. */
+	let webEventStream: WebEventStream;
 	/** The store the past conversations are read from. */
 	let sessionStore: SessionStore;
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		temporaryFolderPath = TemporaryFolder.make();
 		const sessionsFolderPath = Path.join(temporaryFolderPath, 'sessions');
 		sessionStore = new SessionStore(sessionsFolderPath);
 		webPermissionAsker = new WebPermissionAsker(true);
+		webEventStream = new WebEventStream();
 
 		webConversation = new WebConversation({
 			agent: AgentBuilder.build({
@@ -100,28 +67,53 @@ describe('WebRouter.route', () => {
 			maximumTurnCount: 1,
 		});
 
-		webRouter = new WebRouter(webConversation, new WebEventStream());
+		const application = Express();
+		application.use(new WebRouter(webConversation, webEventStream).build());
+		server = Http.createServer(application);
+
+		await new Promise<void>((resolve) => {
+			server.listen(0, '127.0.0.1', () => resolve());
+		});
+
+		const listening = server.address();
+		const port = typeof listening === 'object' && listening !== null ? listening.port : 0;
+		address = `http://127.0.0.1:${port}`;
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
+		webEventStream.closeEveryStream();
+		server.closeAllConnections();
+
+		await new Promise<void>((resolve) => {
+			server.close(() => resolve());
+		});
+
 		TemporaryFolder.remove(temporaryFolderPath);
 	});
 
 	/**
-	 * Reads the JSON out of an answer of the router.
+	 * Sends one request with a body of JSON.
 	 *
-	 * @param content What the router said to write.
-	 * @returns What the browser would parse.
+	 * @param method The method of the request.
+	 * @param path The path of the request.
+	 * @param body What the browser sends, already written out as text.
+	 * @returns What the server answered.
 	 */
-	const readJson = (content: string | Buffer | undefined): Record<string, unknown> => {
-		return JSON.parse(content === undefined ? '{}' : content.toString()) as Record<string, unknown>;
+	const send = async (method: string, path: string, body: string): Promise<Response> => {
+		return await fetch(`${address}${path}`, {
+			method: method,
+			headers: {
+				'content-type': 'application/json',
+			},
+			body: body,
+		});
 	};
 
 	test('answers the state with the model, the folder, and an empty conversation', async () => {
-		const answer = await webRouter.route(makeRequest('GET', '/api/state'), makeResponse().serverResponse);
+		const answer = await fetch(`${address}/api/state`);
 
-		Assert.equal(answer?.statusCode, 200);
-		const state = readJson(answer?.content);
+		Assert.equal(answer.status, 200);
+		const state = (await answer.json()) as Record<string, unknown>;
 		Assert.equal(state['modelName'], MODEL_NAME);
 		Assert.equal(state['workingDirectoryPath'], temporaryFolderPath);
 		Assert.deepEqual(state['messages'], []);
@@ -137,8 +129,9 @@ describe('WebRouter.route', () => {
 		});
 		await new Promise((resolve) => setImmediate(resolve));
 
-		const answer = await webRouter.route(makeRequest('GET', '/api/state'), makeResponse().serverResponse);
-		const pending = readJson(answer?.content)['pendingPermission'] as Record<string, unknown>;
+		const answer = await fetch(`${address}/api/state`);
+		const state = (await answer.json()) as Record<string, unknown>;
+		const pending = state['pendingPermission'] as Record<string, unknown>;
 
 		Assert.equal(pending['toolName'], 'write_file');
 		Assert.equal(pending['summary'], 'write 4 characters to notes.md');
@@ -146,18 +139,19 @@ describe('WebRouter.route', () => {
 	});
 
 	test('answers an empty list of past conversations when nothing was saved', async () => {
-		const answer = await webRouter.route(makeRequest('GET', '/api/sessions'), makeResponse().serverResponse);
+		const answer = await fetch(`${address}/api/sessions`);
 
-		Assert.equal(answer?.statusCode, 200);
-		Assert.deepEqual(readJson(answer?.content)['sessions'], []);
+		Assert.equal(answer.status, 200);
+		Assert.deepEqual(((await answer.json()) as Record<string, unknown>)['sessions'], []);
 	});
 
 	test('lists a past conversation once one has been saved', async () => {
 		const storedSession = sessionStore.startSession('a-remembered-model');
 		sessionStore.save(storedSession, []);
 
-		const answer = await webRouter.route(makeRequest('GET', '/api/sessions'), makeResponse().serverResponse);
-		const sessions = readJson(answer?.content)['sessions'] as Array<Record<string, unknown>>;
+		const answer = await fetch(`${address}/api/sessions`);
+		const body = (await answer.json()) as Record<string, unknown>;
+		const sessions = body['sessions'] as Array<Record<string, unknown>>;
 
 		Assert.equal(sessions.length, 1);
 		Assert.equal(sessions[0]?.['identifier'], storedSession.identifier);
@@ -166,21 +160,15 @@ describe('WebRouter.route', () => {
 	});
 
 	test('answers with a not found when a past conversation does not exist', async () => {
-		const answer = await webRouter.route(
-			makeRequest('GET', '/api/sessions/there-is-no-such-conversation'),
-			makeResponse().serverResponse,
-		);
+		const answer = await fetch(`${address}/api/sessions/there-is-no-such-conversation`);
 
-		Assert.equal(answer?.statusCode, 404);
+		Assert.equal(answer.status, 404);
 	});
 
 	test('answers with a not found for an identifier that tries to climb out of the sessions folder', async () => {
-		const answer = await webRouter.route(
-			makeRequest('GET', '/api/sessions/..%2F..%2Fpackage'),
-			makeResponse().serverResponse,
-		);
+		const answer = await fetch(`${address}/api/sessions/..%2F..%2Fpackage`);
 
-		Assert.equal(answer?.statusCode, 404);
+		Assert.equal(answer.status, 404);
 	});
 
 	test('answers a permission question and releases the tool parked on it', async () => {
@@ -192,75 +180,80 @@ describe('WebRouter.route', () => {
 		await new Promise((resolve) => setImmediate(resolve));
 		const identifier = webPermissionAsker.waitingPermission?.identifier ?? '';
 
-		const answer = await webRouter.route(
-			makeRequest('POST', '/api/permission', JSON.stringify({ identifier: identifier, decision: 'allowed' })),
-			makeResponse().serverResponse,
+		const answer = await send(
+			'POST',
+			'/api/permission',
+			JSON.stringify({ identifier: identifier, decision: 'allowed' }),
 		);
 
-		Assert.equal(answer?.statusCode, 200);
+		Assert.equal(answer.status, 200);
 		Assert.equal(await asking, 'allowed');
 	});
 
 	test('answers with a not found when the permission answer names no waiting question', async () => {
-		const answer = await webRouter.route(
-			makeRequest(
-				'POST',
-				'/api/permission',
-				JSON.stringify({ identifier: 'permission-404', decision: 'allowed' }),
-			),
-			makeResponse().serverResponse,
+		const answer = await send(
+			'POST',
+			'/api/permission',
+			JSON.stringify({ identifier: 'permission-404', decision: 'allowed' }),
 		);
 
-		Assert.equal(answer?.statusCode, 404);
+		Assert.equal(answer.status, 404);
 	});
 
 	test('refuses a permission answer whose body is not an object holding an identifier', async () => {
-		const answer = await webRouter.route(
-			makeRequest('POST', '/api/permission', 'this is not JSON'),
-			makeResponse().serverResponse,
-		);
+		const answer = await send('POST', '/api/permission', 'this is not JSON');
 
-		Assert.equal(answer?.statusCode, 400);
+		Assert.equal(answer.status, 400);
 	});
 
 	test('refuses a message whose body holds no message', async () => {
-		const answer = await webRouter.route(
-			makeRequest('POST', '/api/message', JSON.stringify({ nothing: true })),
-			makeResponse().serverResponse,
-		);
+		const answer = await send('POST', '/api/message', JSON.stringify({ nothing: true }));
 
-		Assert.equal(answer?.statusCode, 400);
+		Assert.equal(answer.status, 400);
 	});
 
 	test('refuses an empty message before any turn is started', async () => {
-		const answer = await webRouter.route(
-			makeRequest('POST', '/api/message', JSON.stringify({ message: '   ' })),
-			makeResponse().serverResponse,
-		);
+		const answer = await send('POST', '/api/message', JSON.stringify({ message: '   ' }));
 
-		Assert.equal(answer?.statusCode, 409);
-		Assert.equal(readJson(answer?.content)['error'], 'The message is empty.');
+		Assert.equal(answer.status, 409);
+		Assert.equal(((await answer.json()) as Record<string, unknown>)['error'], 'The message is empty.');
 	});
 
 	test('serves the page at the root of the address', async () => {
-		const answer = await webRouter.route(makeRequest('GET', '/'), makeResponse().serverResponse);
+		const answer = await fetch(`${address}/`);
 
-		Assert.equal(answer?.statusCode, 200);
-		Assert.equal(answer?.contentType, 'text/html; charset=utf-8');
+		Assert.equal(answer.status, 200);
+		Assert.equal(answer.headers.get('content-type'), 'text/html; charset=utf-8');
+	});
+
+	test('serves the stylesheet of Bootstrap it was asked to lay the page out with', async () => {
+		const answer = await fetch(`${address}/bootstrap.css`);
+
+		Assert.equal(answer.status, 200);
+		Assert.equal(answer.headers.get('content-type'), 'text/css; charset=utf-8');
+		Assert.match(await answer.text(), /Bootstrap/);
 	});
 
 	test('answers with a not found at an address nothing is served at', async () => {
-		const answer = await webRouter.route(makeRequest('GET', '/nothing-here'), makeResponse().serverResponse);
+		const answer = await fetch(`${address}/nothing-here`);
 
-		Assert.equal(answer?.statusCode, 404);
+		Assert.equal(answer.status, 404);
 	});
 
-	test('takes over the request at the stream and answers nothing itself', async () => {
-		const { serverResponse, written } = makeResponse();
+	test('takes over the request at the stream and holds it open', async () => {
+		const answer = await fetch(`${address}/api/events`);
 
-		const answer = await webRouter.route(makeRequest('GET', '/api/events'), serverResponse);
+		Assert.equal(answer.status, 200);
+		Assert.equal(answer.headers.get('content-type'), 'text/event-stream; charset=utf-8');
+		Assert.equal(webEventStream.openStreamCount, 1, 'the stream must be held open, not answered and ended');
 
-		Assert.equal(answer, null, 'the stream route holds the request open rather than answering it');
-		Assert.equal(written.length > 0, true, 'the stream must be opened with something written on it');
+		const reader = answer.body?.getReader();
+		const firstChunk = await reader?.read();
+		Assert.equal(
+			new TextDecoder().decode(firstChunk?.value).length > 0,
+			true,
+			'the stream must be opened with something written on it',
+		);
+		await reader?.cancel();
 	});
 });

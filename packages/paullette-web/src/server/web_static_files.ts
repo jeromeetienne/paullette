@@ -1,9 +1,10 @@
 import Fs from 'node:fs';
 import Path from 'node:path';
+import Url from 'node:url';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	WebStaticFiles — serves the page, the stylesheet, and the script out of public/
+//	WebStaticFiles — serves the page, the stylesheets, and the script
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -13,21 +14,25 @@ import Path from 'node:path';
  * The list is written out rather than read from the folder, so that a path arriving from a web address can never
  * reach a file that was not meant to be sent. There is no path to resolve and nothing to climb out of.
  */
-const SERVED_FILES: Record<string, { fileName: string; contentType: string }> = {
+const SERVED_FILES: Record<string, { resolveFilePath: () => string; contentType: string }> = {
 	'/': {
-		fileName: 'index.html',
+		resolveFilePath: () => Path.join(WebStaticFiles.folderPath(), 'index.html'),
 		contentType: 'text/html; charset=utf-8',
 	},
 	'/index.html': {
-		fileName: 'index.html',
+		resolveFilePath: () => Path.join(WebStaticFiles.folderPath(), 'index.html'),
 		contentType: 'text/html; charset=utf-8',
 	},
+	'/bootstrap.css': {
+		resolveFilePath: () => WebStaticFiles.bootstrapStylesheetPath(),
+		contentType: 'text/css; charset=utf-8',
+	},
 	'/paullette.css': {
-		fileName: 'paullette.css',
+		resolveFilePath: () => Path.join(WebStaticFiles.folderPath(), 'paullette.css'),
 		contentType: 'text/css; charset=utf-8',
 	},
 	'/paullette.js': {
-		fileName: 'paullette.js',
+		resolveFilePath: () => Path.join(WebStaticFiles.folderPath(), 'paullette.js'),
 		contentType: 'text/javascript; charset=utf-8',
 	},
 };
@@ -43,7 +48,7 @@ export type StaticFile = {
 };
 
 /**
- * Serves the page, the stylesheet, and the script out of `public/`.
+ * Serves the page, the stylesheets, and the script.
  */
 export class WebStaticFiles {
 	/**
@@ -60,6 +65,31 @@ export class WebStaticFiles {
 	}
 
 	/**
+	 * The absolute path of the stylesheet of Bootstrap, inside the `bootstrap` package.
+	 *
+	 * Bootstrap is a dependency of this package and is read off the disk of the machine paullette runs on, never
+	 * fetched from a content delivery network. The server listens on the loopback address by default, and a page
+	 * that needed the internet to look right would be wrong.
+	 *
+	 * @returns The absolute path of `bootstrap.min.css`.
+	 */
+	static bootstrapStylesheetPath(): string {
+		return Url.fileURLToPath(import.meta.resolve('bootstrap/dist/css/bootstrap.min.css'));
+	}
+
+	/**
+	 * Every path the browser may ask a file at.
+	 *
+	 * The router registers one route for each of them, so that Express matches a whole path against this list
+	 * and never resolves a path from a web address against a folder.
+	 *
+	 * @returns The paths, in the order they are written out above.
+	 */
+	static servedPaths(): string[] {
+		return Object.keys(SERVED_FILES);
+	}
+
+	/**
 	 * Reads the file a browser asked for.
 	 *
 	 * @param pathName The path of the request, with no query string.
@@ -71,7 +101,7 @@ export class WebStaticFiles {
 			return null;
 		}
 
-		const filePath = Path.join(WebStaticFiles.folderPath(), served.fileName);
+		const filePath = served.resolveFilePath();
 		if (Fs.existsSync(filePath) === false) {
 			return null;
 		}
