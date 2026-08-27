@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>paullette</title>
+		<link rel="stylesheet" href="/paullette.css" />
+	</head>
+	<body>
+		<header class="header">
+			<h1 class="header-name">paullette</h1>
+			<dl class="header-facts">
+				<dt>model</dt>
+				<dd id="model-name">…</dd>
+				<dt>folder</dt>
+				<dd id="working-directory-path">…</dd>
+				<dt>conversation</dt>
+				<dd id="session-identifier">…</dd>
+			</dl>
+			<button type="button" id="sessions-button" class="sessions-button">past conversations</button>
+		</header>
+
+		<main class="conversation" id="conversation" aria-live="polite">
+			<p class="empty-note" id="empty-note">Ask paullette something.</p>
+		</main>
+
+		<section class="permission" id="permission" hidden>
+			<h2 class="permission-title">paullette wants to <span id="permission-summary"></span></h2>
+			<pre class="permission-detail" id="permission-detail" hidden></pre>
+			<div class="permission-buttons">
+				<button type="button" id="permission-allow" class="allow">allow</button>
+				<button type="button" id="permission-always" class="always">always allow this tool</button>
+				<button type="button" id="permission-refuse" class="refuse">refuse</button>
+			</div>
+		</section>
+
+		<form class="composer" id="composer">
+			<textarea
+				id="message"
+				class="composer-message"
+				rows="3"
+				placeholder="Ask paullette something. Press Enter to send, Shift and Enter for a new line."
+				autofocus
+			></textarea>
+			<button type="submit" id="send-button" class="composer-send">send</button>
+		</form>
+
+		<p class="status" id="status" role="status"></p>
+
+		<dialog class="sessions" id="sessions-dialog">
+			<h2 class="sessions-title">Past conversations</h2>
+			<ul class="sessions-list" id="sessions-list"></ul>
+			<div class="sessions-shown" id="sessions-shown" hidden></div>
+			<button type="button" id="sessions-close" class="sessions-close">close</button>
+		</dialog>
+
+		<script src="/paullette.js"></script>
+	</body>
+</html>
