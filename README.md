@@ -89,7 +89,7 @@ These are built in:
 - `/clear` — start a new conversation
 - `/agents` — list the subagents that were loaded
 - `/skills` — list the skills that were loaded
-- `/commands` — list the slash commands that were loaded
+- `/commands` — list the slash commands that were loaded, the same list as `/help`
 - `/memory` — list everything remembered about this project
 
 Every Markdown file in `.paullette/commands` becomes a slash command named after the file. Three things are expanded in the body of the file before it is sent to the model:

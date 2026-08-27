@@ -228,6 +228,7 @@ export class SlashCommandHandler {
 				'/clear — start a new conversation',
 				'/agents — list the subagents that were loaded',
 				'/skills — list the skills that were loaded',
+				'/commands — list the slash commands that were loaded, the same list as /help',
 				'/memory — list everything remembered about this project',
 			],
 			'',
