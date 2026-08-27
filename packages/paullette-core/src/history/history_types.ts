@@ -33,3 +33,22 @@ export type StoredSession = {
 	/** Everything said so far, which is what is handed back to the model when the session is resumed. */
 	history: ConversationHistoryItem[];
 };
+
+/**
+ * One saved conversation, without what was said in it.
+ *
+ * A list of every session on disk is read to show a person what is there. Reading the whole conversation of
+ * every session in order to show a list of them would read every byte of every file to show none of it.
+ */
+export type StoredSessionSummary = {
+	/** The name of the session, which is also the name of its file without the extension. */
+	identifier: string;
+	/** When the session was started, as an ISO timestamp. */
+	startedAt: string;
+	/** When the session was last written, as an ISO timestamp. */
+	updatedAt: string;
+	/** The model the conversation was held with. */
+	modelName: string;
+	/** How many items the conversation holds. */
+	itemCount: number;
+};

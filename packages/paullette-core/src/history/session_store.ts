@@ -1,7 +1,11 @@
 import Fs from 'node:fs';
 import Path from 'node:path';
 
-import { type ConversationHistoryItem, type StoredSession } from './history_types.ts';
+import {
+	type ConversationHistoryItem,
+	type StoredSession,
+	type StoredSessionSummary,
+} from './history_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -79,6 +83,71 @@ export class SessionStore {
 		try {
 			const text = Fs.readFileSync(Path.join(this._sessionsFolderPath, newestFileName), 'utf8');
 			return JSON.parse(text) as StoredSession;
+		} catch {
+			return null;
+		}
+	}
+
+	/**
+	 * Lists every session on disk, newest first, without reading what was said in any of them.
+	 *
+	 * A file that cannot be read or cannot be understood is passed over rather than thrown on, because a folder
+	 * a person can open and edit by hand is a folder that will one day hold a file paullette did not write.
+	 *
+	 * @returns One summary per session, newest first.
+	 */
+	listSessions(): StoredSessionSummary[] {
+		if (Fs.existsSync(this._sessionsFolderPath) === false) {
+			return [];
+		}
+
+		const summaries: StoredSessionSummary[] = [];
+
+		for (const fileName of Fs.readdirSync(this._sessionsFolderPath)) {
+			if (fileName.endsWith('.json') === false) {
+				continue;
+			}
+
+			try {
+				const text = Fs.readFileSync(Path.join(this._sessionsFolderPath, fileName), 'utf8');
+				const session = JSON.parse(text) as StoredSession;
+				summaries.push({
+					identifier: session.identifier,
+					startedAt: session.startedAt,
+					updatedAt: session.updatedAt,
+					modelName: session.modelName,
+					itemCount: Array.isArray(session.history) === true ? session.history.length : 0,
+				});
+			} catch {
+				continue;
+			}
+		}
+
+		return summaries.sort((first, second) => second.updatedAt.localeCompare(first.updatedAt));
+	}
+
+	/**
+	 * Reads back one session by its identifier.
+	 *
+	 * The identifier is checked against the shape `startSession` gives, and anything else is refused without a
+	 * file being opened. The identifier reaches this method from a web address, so a name holding a dot or a
+	 * separator would otherwise read a file outside the sessions folder.
+	 *
+	 * @param identifier The name of the session, which is also the name of its file without the extension.
+	 * @returns The session, or null when there is no such session or the identifier is not one paullette makes.
+	 */
+	loadSession(identifier: string): StoredSession | null {
+		if (/^[A-Za-z0-9-]+$/.test(identifier) === false) {
+			return null;
+		}
+
+		const filePath = Path.join(this._sessionsFolderPath, `${identifier}.json`);
+		if (Fs.existsSync(filePath) === false) {
+			return null;
+		}
+
+		try {
+			return JSON.parse(Fs.readFileSync(filePath, 'utf8')) as StoredSession;
 		} catch {
 			return null;
 		}
