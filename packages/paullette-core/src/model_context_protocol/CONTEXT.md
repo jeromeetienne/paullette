@@ -21,4 +21,5 @@ Reads the Model Context Protocol servers a project declares, starts them, turns 
 
 ## Background
 - The whole folder comes from [issue number 7](https://github.com/jeromeetienne/paullette/issues/7), which also says why the resources and the prompts are left out, and why no command is added to add, to remove, or to list a server.
+- How a person declares a server, and every field of an entry, is written down once in [`/docs/mcp_server.md`](../../../../docs/mcp_server.md). Do not restate any of it here.
 - The transports come from `@openai/agents`, which already carries `MCPServerStdio`, `MCPServerStreamableHttp`, and `MCPServerSSE`, so paullette never speaks the protocol itself.

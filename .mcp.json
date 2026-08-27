@@ -1,0 +1,9 @@
+{
+	"mcpServers": {
+		"now": {
+			"type": "stdio",
+			"command": "npx",
+			"args": ["-y", "mcp-now"]
+		}
+	}
+}

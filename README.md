@@ -120,20 +120,13 @@ Every tool that takes a path refuses a path outside the working folder. Every to
 
 ## Model Context Protocol servers
 
-A Model Context Protocol server adds tools to the agent without changing the code of paullette. Declare a server in any of these three files, and paullette starts it, lists its tools, and offers them to the model:
-
-- `.mcp.json` at the root of the project
-- the `mcpServers` field of `.paullette/settings.json`, the settings file of the project
-- the `mcpServers` field of `~/.paullette/settings.json`, the settings file of your user account
-
-They are read in that order from the weakest to the strongest, so the settings file of the project wins over `.mcp.json`, and `.mcp.json` wins over the settings file of your user account. The file names and the field names are the ones Claude Code uses, so a project that is already set up for Claude Code needs no new file.
-
-A server that paullette starts itself names a `command`, and may name `args`, `env`, and `cwd`:
+A Model Context Protocol server adds tools to the agent without changing the code of paullette. Declare a server in `.mcp.json` at the root of the project, in `.paullette/settings.json`, or in `~/.paullette/settings.json`, and paullette starts it, lists its tools, and offers them to the model. This repository declares one:
 
 ```json
 {
 	"mcpServers": {
 		"now": {
+			"type": "stdio",
 			"command": "npx",
 			"args": ["-y", "mcp-now"]
 		}
@@ -141,25 +134,9 @@ A server that paullette starts itself names a `command`, and may name `args`, `e
 }
 ```
 
-A server paullette reaches over the network names a `url`, and may name `headers` and a `type` of either `http` or `sse`:
+The name of every tool starts with the name of the server it came from, so the `get_current_date` tool of the `now` server reaches the model as `now_get_current_date`. Every call asks you first, exactly like a shell command does. A server that fails to start prints one line beginning with `paullette-warning:` and paullette carries on with the servers that did start.
 
-```json
-{
-	"mcpServers": {
-		"remote": {
-			"type": "http",
-			"url": "https://example.com/model-context-protocol",
-			"headers": { "Authorization": "Bearer YOUR_TOKEN" }
-		}
-	}
-}
-```
-
-The name of every tool starts with the name of the server it came from, so the `get_current_date` tool of the `now` server reaches the model as `now_get_current_date`, and two servers that expose the same tool name do not collide. Every call asks you first, exactly like a shell command does.
-
-A server that fails to start prints one line beginning with `paullette-warning:` and paullette carries on with the servers that did start. Every server is stopped when paullette exits.
-
-paullette reads the tools of a Model Context Protocol server. It does not yet read the resources or the prompts of one, and it has no command to add, to remove, or to list a server: write the file by hand.
+The whole of it — both transports, every field of an entry, how the three files are merged, and what is not built — is in [`docs/mcp_server.md`](docs/mcp_server.md).
 
 ## Memory
 
@@ -204,6 +181,7 @@ packages/
 	                   Published as paullette, and this is what npx paullette runs.
 test/                  the verification runner, which starts paullette as a separate
 	                   process. The unit tests live inside each package instead.
+docs/                  the longer pages the README links to.
 ```
 
 `paullette` imports `paullette-core` by name, for example `import { ToolRegistry } from 'paullette-core/tools/tool_registry';`. Nothing imports across a package folder by a relative path, and `paullette-core` never imports from `paullette`. That is what will let a web interface sit on the same agent as the terminal interface.
