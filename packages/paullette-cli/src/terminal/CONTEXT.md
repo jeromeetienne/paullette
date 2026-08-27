@@ -7,7 +7,8 @@ Everything that talks to the person at the terminal: asking permission, reading 
 - `permission_prompt.ts`: `PermissionPrompt`, which implements the `PermissionAsker` interface from `paullette-core/tools/tool_types`.
 
 ## Rules
-- This folder may import from `paullette-core`, but `paullette-core` must never import from here. The dependency runs one way so that a tool can be used without a terminal, which is what lets `paullette-core` serve a second front end.
+- This folder may import from `paullette-core`, but `paullette-core` must never import from here. The dependency runs one way so that a tool can be used without a terminal, which is what lets `paullette-core` serve the web interface as well.
+- Nothing here imports from `paullette-web`, and nothing in `paullette-web` imports from here. Neither front end holds any of the other one. Anything both of them need lives in `paullette-core`, which is why `ConversationSession` is in `paullette-core/agent/` and not here.
 - Every import that reaches `paullette-core` uses the package name, never a relative path that climbs out of `packages/paullette-cli`.
 - Everything paullette says about its own working goes to the standard error. The standard output carries only the answer of the model, so that a caller reading the standard output gets the answer on its own.
 - `PermissionPrompt` refuses when there is no terminal to ask at. That is the safe direction: paullette running from a script or from a check must never change a file that nobody approved.

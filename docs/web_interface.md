@@ -1,0 +1,135 @@
+# The web interface of paullette
+
+`npx paullette web` starts a local web server and serves a conversation with paullette in a browser, in place of the terminal interface.
+
+```
+$ npx paullette web
+paullette web interface is served at http://127.0.0.1:3000
+```
+
+Open that address in a browser. The page holds the conversation, shows a permission question as a form, and lists the conversations already saved in `.paullette/sessions`.
+
+## The options
+
+| Option | What it does |
+| --- | --- |
+| `--port <number>` | The port to listen on. `3000` by default. `0` asks the operating system for a free one, and paullette prints the port it got. |
+| `--host <address>` | The address to listen on. `127.0.0.1` by default. |
+
+Every option the other modes accept works here too, on either side of the command name: `paullette --yes web` and `paullette web --yes` do the same thing. So do `--resume`, `--model`, `--base-url`, `--api-key`, and `--max-turns`.
+
+## The address it listens on, and why the default is the loopback address
+
+The agent behind this server writes files and runs shell commands on the machine that started it. Anyone who can reach the address can make it do that, and there is no account and no password. So the default address is `127.0.0.1`, which nothing outside the machine can reach.
+
+`--host` still accepts anything, because reaching paullette from a browser on another machine is one of the reasons [issue #2](https://github.com/jeromeetienne/paullette/issues/2) asked for the web interface. An address that is not the loopback address is said out loud and the server starts anyway:
+
+```
+$ paullette web --host 0.0.0.0
+paullette-warning: listening on 0.0.0.0 rather than 127.0.0.1. Anyone who can reach that address can make paullette run shell commands on this machine.
+paullette web interface is served at http://127.0.0.1:3000
+```
+
+## What the browser and the server say to each other
+
+The browser reads one stream and sends everything it has to say in an ordinary request.
+
+| Method and path | What it does |
+| --- | --- |
+| `GET /` | The page. `GET /paullette.css` and `GET /paullette.js` are the other two files. |
+| `GET /api/events` | The stream of everything that happens in the conversation, as server-sent events. |
+| `GET /api/state` | The conversation so far and the question waiting for an answer, for a browser that has just connected. |
+| `POST /api/message` | Starts one turn. It answers `202` at once and does not wait for the turn. |
+| `POST /api/permission` | Answers one permission question. |
+| `GET /api/sessions` | The past conversations in `.paullette/sessions`, newest first. |
+| `GET /api/sessions/<identifier>` | One past conversation. |
+
+The events written on the stream: `turnStarted`, `text`, `toolCalled`, `toolOutput`, `permissionRequested`, `permissionAnswered`, `answerRendered`, `turnEnded`, and `error`.
+
+Server-sent events were chosen over a websocket because the stream only ever runs one way, from the server to the browser. Everything the browser has to say fits in a short request, and `node:http` serves a server-sent events stream with no dependency at all, while Node.js has no websocket server of its own.
+
+## One permission question, answered from a second request
+
+This is the part the whole design rests on.
+
+```mermaid
+sequenceDiagram
+	participant B as The browser
+	participant S as The server
+	participant A as The agent
+	participant T as A tool
+
+	B->>S: GET /api/events
+	Note over B,S: the stream stays open
+	B->>S: POST /api/message
+	S-->>B: 202, without waiting for the turn
+	S->>A: run the turn
+	A->>T: call a tool
+	T->>S: ask before changing anything
+	S-->>B: permissionRequested, on the open stream
+	Note over S,T: the turn is parked on a promise
+	B->>S: POST /api/permission
+	S->>T: allowed, or refused
+	T-->>A: the result
+	A-->>S: the answer, streamed out
+	S-->>B: text, then answerRendered, then turnEnded
+```
+
+`WebPermissionAsker` implements the same `PermissionAsker` interface that `PermissionPrompt` implements at the terminal. `ask` parks a promise and tells the server; the server writes one `permissionRequested` event; `POST /api/permission` finds the parked promise by its identifier and resolves it. The tool was waiting the whole time and carries on as though nothing had happened.
+
+Two rules follow from that:
+
+- **An answer of "always allow" is remembered for this run only, never written to disk.** That is the same rule the terminal interface follows.
+- **Closing the server refuses every question still waiting.** A tool parked on a question nobody will ever answer would hold the turn, and the turn would hold the process.
+
+## One server, one conversation, several browsers
+
+Every browser that connects reads the same stream and sees the same conversation, and any of them may send the next message or answer the waiting question.
+
+Only one turn runs at a time. A message sent while a turn is running is refused with a sentence a person can read, and never queued. The agent runs tools in one working folder, and two turns at once would edit the same files with neither one knowing.
+
+## Nothing the model writes becomes an element in the page
+
+The answer is shown twice. While it streams, each piece is added to the page as plain text, so the answer appears word by word. When the turn ends, the server sends the finished answer already turned into HTML and the browser replaces the block.
+
+`WebMarkdown` turns the Markdown into HTML with `marked`, and replaces three of its renderers:
+
+- `html` writes the HTML the model wrote as visible text instead of passing it through as an element.
+- `link` drops the address when its scheme is not `http`, `https`, or `mailto`, so a link whose address starts with `javascript:` arrives as its own words and nothing else.
+- `image` never writes an `img` element and writes a link instead. A page that fetched an address the model chose would tell whoever owns that address what the model wrote.
+
+The escaping happens **inside** the renderer and not before it. Escaping the text first was tried and was wrong: `marked` escapes the ampersand again inside a code block, so `1 < 2` came out as `1 &lt; 2` on the screen. A coding agent writes comparison operators inside code fences constantly.
+
+The page itself never builds HTML out of text. The HTML of an answer always comes from the server, which has already made sure of all of the above.
+
+## Where the files are
+
+```
+packages/paullette-web/
+	src/web_interface.ts          WebInterface.start(), the one thing paullette-cli imports
+	src/server/                   the server, the routes, the stream, the permission asker, the Markdown
+	public/index.html             the page
+	public/paullette.css          the stylesheet
+	public/paullette.js           the script, plain JavaScript, sent to the browser as it is
+```
+
+`public/` sits beside `src/` and never inside it, because `tsc` copies no file that is not TypeScript. It is found at run time with `Path.join(import.meta.dirname, '..', '..', 'public')`, which resolves the same way from `src/server/` during development and from `dist/server/` once published.
+
+The list of files the server will send is written out in `web_static_files.ts`. No path from a web address is ever resolved against a folder, so there is nothing to climb out of. `SessionStore.loadSession` takes the same care: it refuses any identifier that is not the shape `startSession` makes, because that identifier arrives from `GET /api/sessions/<identifier>`.
+
+## What it does not do yet
+
+- **No slash commands.** `SlashCommandHandler` writes to a terminal today.
+- **No carrying on a past conversation.** The past conversations can be read, which is what [issue #2](https://github.com/jeromeetienne/paullette/issues/2) asked for. Carrying one on is what `--resume` does at the terminal.
+- **No account and no password.** See the section on the address it listens on.
+
+## How it is checked
+
+Two verification steps, both in `npm run verify`:
+
+- `webInterfaceServed` calls no model. It starts `paullette web --port 0` and asks for the page, the script, the state, and an address nothing is served at.
+- `webTurnAnswered` holds a whole turn: it opens the stream, sends a message, answers the permission question over a second request while the turn is parked on it, waits for `turnEnded`, and then reads the file the tool wrote off the disk.
+
+The unit tests of `packages/paullette-web` never start a server on a fixed port and never call a model. The full account of both suites is in [`testing.md`](testing.md).
+
+The design of all of this, and the live test that proved the parked promise could be released from a second request before any of it was written, are in the plan on [issue #9](https://github.com/jeromeetienne/paullette/issues/9).

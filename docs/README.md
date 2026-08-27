@@ -6,6 +6,7 @@ The [README at the root](../README.md) is the short version: what paullette is, 
 
 - [`paullette_folder.md`](paullette_folder.md) — the format reference of the `.paullette` folder: the instruction document, the subagents, the slash commands, the skills, the memory, and the sessions, with every frontmatter field and what it falls back to.
 - [`mcp_server.md`](mcp_server.md) — how to declare a Model Context Protocol server, both transports, how the three source files are merged, and what happens when a server does not start.
+- [`web_interface.md`](web_interface.md) — what `npx paullette web` serves, the routes, how a permission question raised inside a tool call is answered from the browser, and why the default address is the loopback address.
 
 ## For somebody working on paullette itself
 

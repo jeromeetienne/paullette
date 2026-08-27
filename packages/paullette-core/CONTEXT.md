@@ -4,7 +4,7 @@
 The package named `paullette-core`. It holds everything paullette does that is not a user interface: building the agent, reading the configuration, reading the `.paullette` folder, keeping the history, keeping the memory, and every tool the agent can call.
 
 ## Key Exports & Entry Points
-- `src/agent/`: turns the configuration into an agent the OpenAI Agents SDK can run — see its own CONTEXT.md.
+- `src/agent/`: turns the configuration into an agent the OpenAI Agents SDK can run, and runs one turn of a conversation with it — see its own CONTEXT.md.
 - `src/config_folder/`: finds and reads the `.paullette` folder — see its own CONTEXT.md.
 - `src/config_runtime/`: reads the configuration given on the command line and in the environment — see its own CONTEXT.md.
 - `src/history/`: keeps the conversation and the lines the user typed — see its own CONTEXT.md.
