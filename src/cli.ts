@@ -1,4 +1,4 @@
-#!/usr/bin/env -S npx tsx
+#!/usr/bin/env node
 import Path from 'node:path';
 
 import { type Agent } from '@openai/agents';
