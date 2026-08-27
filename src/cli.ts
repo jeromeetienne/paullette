@@ -13,6 +13,7 @@ import { PermissionPrompt } from './terminal/permission_prompt.ts';
 import { ReadlineInterface } from './terminal/readline_interface.ts';
 import { SlashCommandHandler } from './terminal/slash_command_handler.ts';
 import { ConfigLoader } from './config/config_loader.ts';
+import { PackageVersionReader } from './config/package_version_reader.ts';
 import { type CodeAgentConfig } from './config/config_types.ts';
 import { ConfigFolderReader } from './config_folder/config_folder_reader.ts';
 import { type ConfigFolderContent } from './config_folder/config_folder_types.ts';
@@ -96,6 +97,7 @@ class Main {
 		program
 			.name('code-agent')
 			.description('A coding agent that reads a .code-agent folder and runs on any OpenAI API compatible endpoint')
+			.version(PackageVersionReader.read(), '-V, --version', 'print the version of code-agent and exit')
 			.option('--print <prompt>', 'answer one prompt and exit, printing the answer to the standard output')
 			.option('--list', 'print what was read out of the .code-agent folder as JSON, and exit')
 			.option('--expand <command>', 'print the expanded text of a slash command without calling the model')
