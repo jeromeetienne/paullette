@@ -34,7 +34,7 @@ Two behaviours matter as much as the options themselves. When there is no termin
 
 The goal is the smallest thing that proves the whole chain works: command line to model to answer.
 
-- [ ] Move `src/libs/claude_folder/` to `src/libs/doublure_folder/`, renaming `claude_folder_types.ts` to `doublure_folder_types.ts`
+- [x] Move `src/libs/claude_folder/` to `src/libs/doublure_folder/`, renaming `claude_folder_types.ts` to `doublure_folder_types.ts`
 - [ ] `src/libs/agent/model_provider.ts` — the three OpenAI Agents SDK calls from the plan
 - [ ] `src/libs/agent/system_prompt_builder.ts` — a system prompt with no `.doublure` content yet
 - [ ] `src/libs/agent/agent_builder.ts` — an agent with no tools yet

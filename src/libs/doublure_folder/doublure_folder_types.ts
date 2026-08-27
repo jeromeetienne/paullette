@@ -2,13 +2,14 @@ import { z } from 'zod';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	claude_folder_types — the shapes read out of a .claude folder
+//	doublure_folder_types — the shapes read out of the .doublure folder
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
  * Accepts either a comma separated string or a list of strings, and always produces a list of strings. The
- * frontmatter of a `.claude` file writes a list of tool names either way.
+ * frontmatter of a `.doublure` file writes a list of tool names either way, because both spellings appear in the
+ * Claude Code files these formats come from.
  */
 const toolNameListSchema = z
 	.union([z.string(), z.array(z.string())])
@@ -24,7 +25,7 @@ const toolNameListSchema = z
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The Zod schema of the frontmatter of a file in `.claude/agents`.
+ * The Zod schema of the frontmatter of a file in `.doublure/agents`.
  */
 export const agentFrontmatterSchema = z.object({
 	/** The name of the subagent. Doublure falls back to the file name when this field is absent. */
@@ -38,7 +39,7 @@ export const agentFrontmatterSchema = z.object({
 });
 
 /**
- * A subagent read from a file in `.claude/agents`. Doublure turns every subagent definition into a tool that the
+ * A subagent read from a file in `.doublure/agents`. Doublure turns every subagent definition into a tool that the
  * main agent can call.
  */
 export type AgentDefinition = {
@@ -61,7 +62,7 @@ export type AgentDefinition = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The Zod schema of the frontmatter of a file in `.claude/commands`.
+ * The Zod schema of the frontmatter of a file in `.doublure/commands`.
  */
 export const commandFrontmatterSchema = z.object({
 	/** The sentence shown next to the command name in the command list. */
@@ -75,7 +76,7 @@ export const commandFrontmatterSchema = z.object({
 });
 
 /**
- * A slash command read from a file in `.claude/commands`. The user types the name of the command, and doublure
+ * A slash command read from a file in `.doublure/commands`. The user types the name of the command, and doublure
  * sends the body of the file to the model as the message of the user.
  */
 export type CommandDefinition = {
@@ -98,7 +99,7 @@ export type CommandDefinition = {
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The Zod schema of the frontmatter of a `SKILL.md` file in `.claude/skills`.
+ * The Zod schema of the frontmatter of a `SKILL.md` file in `.doublure/skills`.
  */
 export const skillFrontmatterSchema = z.object({
 	/** The name of the skill. Doublure falls back to the name of the folder when this field is absent. */
@@ -110,7 +111,7 @@ export const skillFrontmatterSchema = z.object({
 });
 
 /**
- * A skill read from a `SKILL.md` file in `.claude/skills`. The agent sees the name and the description of every
+ * A skill read from a `SKILL.md` file in `.doublure/skills`. The agent sees the name and the description of every
  * skill in its system prompt, and reads the instructions only when it calls the `load_skill` tool.
  */
 export type SkillDefinition = {
@@ -126,29 +127,29 @@ export type SkillDefinition = {
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	Folder Locations And Aggregate Content
+//	Folder Location And Aggregate Content
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The `.claude` folders doublure reads, in order of growing priority. A definition found in a later folder
- * replaces a definition of the same name found in an earlier folder.
+ * Where the single `.doublure` folder sits. Doublure reads exactly one folder, at the project root, rather than
+ * searching a chain of parent folders. See GitHub issue number 1 for why the first version works that way.
  */
-export type ClaudeFolderPaths = {
-	/** The absolute paths of the `.claude` folders that exist, from the least specific to the most specific. */
-	folderPaths: string[];
+export type DoublureFolderPaths = {
 	/** The absolute path of the folder doublure treats as the root of the project. */
 	projectRootPath: string;
+	/** The absolute path of the `.doublure` folder itself. */
+	doublureFolderPath: string;
 };
 
 /**
- * Everything doublure read out of the `.claude` folders.
+ * Everything doublure read out of the `.doublure` folder.
  */
-export type ClaudeFolderContent = {
-	/** The `.claude` folders the content was read from. */
-	paths: ClaudeFolderPaths;
-	/** The text of every `CLAUDE.md` file that applies, from the least specific to the most specific. */
-	instructionDocuments: InstructionDocument[];
+export type DoublureFolderContent = {
+	/** Where the `.doublure` folder was found. */
+	paths: DoublureFolderPaths;
+	/** The instruction document, or null when `.doublure/CLAUDE.md` is absent. */
+	instructionDocument: InstructionDocument | null;
 	/** Every subagent definition, with the name of a subagent appearing at most once. */
 	agentDefinitions: AgentDefinition[];
 	/** Every slash command definition, with the name of a command appearing at most once. */
@@ -158,11 +159,11 @@ export type ClaudeFolderContent = {
 };
 
 /**
- * One `CLAUDE.md` file, kept next to the path it was read from so that the system prompt can say where each
- * instruction came from.
+ * The instruction document, kept next to the path it was read from so that the system prompt can say where the
+ * instructions came from.
  */
 export type InstructionDocument = {
-	/** The absolute path of the `CLAUDE.md` file. */
+	/** The absolute path of the `CLAUDE.md` file inside the `.doublure` folder. */
 	filePath: string;
 	/** The whole text of the file. */
 	text: string;
