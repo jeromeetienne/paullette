@@ -2,7 +2,7 @@ import Readline from 'node:readline/promises';
 
 import { type Agent } from '@openai/agents';
 
-import { type CodeAgentConfig } from '../config/config_types.ts';
+import { type CodeAgentConfig } from '../config_runtime/config_types.ts';
 import { InputHistoryStore } from '../history/input_history_store.ts';
 import { type ConversationSession } from './conversation_session.ts';
 import { OutputRenderer } from './output_renderer.ts';

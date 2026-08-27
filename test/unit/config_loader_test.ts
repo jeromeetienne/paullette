@@ -2,13 +2,13 @@ import Assert from 'node:assert/strict';
 import Path from 'node:path';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
-import { ConfigLoader } from '../../src/config/config_loader.ts';
+import { ConfigLoader } from '../../src/config_runtime/config_loader.ts';
 import {
 	DEFAULT_API_KEY,
 	DEFAULT_BASE_URL,
 	DEFAULT_MAXIMUM_TURN_COUNT,
 	DEFAULT_MODEL_NAME,
-} from '../../src/config/config_types.ts';
+} from '../../src/config_runtime/config_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

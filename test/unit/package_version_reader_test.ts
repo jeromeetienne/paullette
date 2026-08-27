@@ -3,7 +3,7 @@ import Fs from 'node:fs';
 import Path from 'node:path';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
-import { PackageVersionReader, UNKNOWN_VERSION } from '../../src/config/package_version_reader.ts';
+import { PackageVersionReader, UNKNOWN_VERSION } from '../../src/config_runtime/package_version_reader.ts';
 import { TemporaryFolder } from './libs/temporary_folder.ts';
 
 ///////////////////////////////////////////////////////////////////////////////

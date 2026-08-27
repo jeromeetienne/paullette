@@ -1,7 +1,7 @@
 import { setDefaultOpenAIClient, setOpenAIAPI, setTracingDisabled } from '@openai/agents';
 import OpenAI from 'openai';
 
-import { type CodeAgentConfig } from '../config/config_types.ts';
+import { type CodeAgentConfig } from '../config_runtime/config_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
