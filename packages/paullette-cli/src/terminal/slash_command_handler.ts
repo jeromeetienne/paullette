@@ -2,7 +2,7 @@ import { type ConfigFolderContent } from 'paullette-core/config_folder/config_fo
 import { type MemoryStore } from 'paullette-core/memory/memory_store';
 import { type ToolContext } from 'paullette-core/tools/tool_types';
 import { CommandExpander } from './command_expander.ts';
-import { type ConversationSession } from './conversation_session.ts';
+import { type ConversationSession } from 'paullette-core/agent/conversation_session';
 import { OutputRenderer } from './output_renderer.ts';
 
 ///////////////////////////////////////////////////////////////////////////////

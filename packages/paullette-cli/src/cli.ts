@@ -5,9 +5,9 @@ import { type Agent } from '@openai/agents';
 import { Command } from 'commander';
 
 import { AgentBuilder } from 'paullette-core/agent/agent_builder';
+import { ConversationSession } from 'paullette-core/agent/conversation_session';
 import { ModelProvider } from 'paullette-core/agent/model_provider';
 import { SystemPromptBuilder } from 'paullette-core/agent/system_prompt_builder';
-import { ConversationSession } from './terminal/conversation_session.ts';
 import { OutputRenderer } from './terminal/output_renderer.ts';
 import { PermissionPrompt } from './terminal/permission_prompt.ts';
 import { ReadlineInterface } from './terminal/readline_interface.ts';
@@ -334,7 +334,11 @@ class Main {
 				session.agent,
 				prompt,
 				session.config.maximumTurnCount,
-				(textChunk) => process.stdout.write(textChunk),
+				(turnEvent) => {
+					if (turnEvent.kind === 'text') {
+						process.stdout.write(turnEvent.delta);
+					}
+				},
 			);
 			process.stdout.write('\n');
 		} catch (caughtError) {

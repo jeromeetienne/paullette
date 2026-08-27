@@ -3,8 +3,9 @@ import Path from 'node:path';
 import { type Agent, run } from '@openai/agents';
 import { user } from '@openai/agents';
 
-import { type ConversationHistoryItem, type StoredSession } from 'paullette-core/history/history_types';
-import { SessionStore } from 'paullette-core/history/session_store';
+import { type ConversationHistoryItem, type StoredSession } from '../history/history_types.ts';
+import { SessionStore } from '../history/session_store.ts';
+import { type ConversationTurnListener } from './conversation_turn_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -44,6 +45,13 @@ export class ConversationSession {
 	}
 
 	/**
+	 * The identifier of the conversation being held, which is the name of its file without the extension.
+	 */
+	get sessionIdentifier(): string {
+		return this._storedSession.identifier;
+	}
+
+	/**
 	 * How many items the conversation holds so far.
 	 */
 	get itemCount(): number {
@@ -51,23 +59,35 @@ export class ConversationSession {
 	}
 
 	/**
-	 * Runs one turn: sends everything said so far along with the new message, streams the answer out, and writes
-	 * the conversation to disk.
+	 * Everything said so far, as the OpenAI Agents SDK hands it back.
+	 */
+	get history(): ConversationHistoryItem[] {
+		return this._storedSession.history;
+	}
+
+	/**
+	 * Runs one turn: sends everything said so far along with the new message, tells the listener about each
+	 * thing that happens while the turn runs, and writes the conversation to disk.
 	 *
 	 * The conversation is written before the model is called as well as after it answers, so that stopping
 	 * paullette part way through a turn cannot lose what was already said.
 	 *
+	 * The run is read as a stream of events rather than as a stream of text, because a front end that draws a
+	 * page has to say that a tool was called and not only what the model wrote. The text read out of the events
+	 * is the whole answer and nothing is lost; that was proved live before this was written, and the raw output
+	 * is in the plan on issue 9.
+	 *
 	 * @param agent The agent to run.
 	 * @param promptText The message of the user.
 	 * @param maximumTurnCount The largest number of model turns this request may take.
-	 * @param onTextChunk Called with each piece of the answer as it arrives.
+	 * @param onEvent Called with each thing that happens while the turn runs.
 	 * @returns Nothing.
 	 */
 	async runTurn(
 		agent: Agent,
 		promptText: string,
 		maximumTurnCount: number,
-		onTextChunk: (textChunk: string) => void,
+		onEvent: ConversationTurnListener,
 	): Promise<void> {
 		const inputItems: ConversationHistoryItem[] = [...this._storedSession.history, user(promptText)];
 		this._save(inputItems);
@@ -77,8 +97,33 @@ export class ConversationSession {
 			maxTurns: maximumTurnCount,
 		});
 
-		for await (const textChunk of result.toTextStream()) {
-			onTextChunk(textChunk);
+		for await (const streamEvent of result) {
+			if (streamEvent.type === 'raw_model_stream_event' && streamEvent.data.type === 'output_text_delta') {
+				onEvent({
+					kind: 'text',
+					delta: streamEvent.data.delta,
+				});
+				continue;
+			}
+
+			if (streamEvent.type !== 'run_item_stream_event') {
+				continue;
+			}
+
+			if (streamEvent.name === 'tool_called') {
+				onEvent({
+					kind: 'toolCalled',
+					toolName: ConversationSession._readToolName(streamEvent.item),
+				});
+				continue;
+			}
+
+			if (streamEvent.name === 'tool_output') {
+				onEvent({
+					kind: 'toolOutput',
+					toolName: ConversationSession._readToolName(streamEvent.item),
+				});
+			}
 		}
 		await result.completed;
 
@@ -101,6 +146,30 @@ export class ConversationSession {
 	//	Helpers
 	///////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Reads the name of the tool out of one item of a run.
+	 *
+	 * An item that names no tool gives `unknown` rather than throwing, because the shape of an item is decided
+	 * by the OpenAI Agents SDK and by the endpoint, and a front end losing a whole turn over one unnamed tool
+	 * call would be worse than a line that says `unknown`.
+	 *
+	 * @param item The item the OpenAI Agents SDK gave, which carries a raw item of its own.
+	 * @returns The name of the tool, or `unknown`.
+	 */
+	private static _readToolName(item: unknown): string {
+		if (typeof item !== 'object' || item === null || 'rawItem' in item === false) {
+			return 'unknown';
+		}
+
+		const rawItem = (item as { rawItem: unknown }).rawItem;
+		if (typeof rawItem !== 'object' || rawItem === null || 'name' in rawItem === false) {
+			return 'unknown';
+		}
+
+		const name = (rawItem as { name: unknown }).name;
+		return typeof name === 'string' ? name : 'unknown';
+	}
 
 	/**
 	 * Writes the conversation to disk and keeps it in memory.
