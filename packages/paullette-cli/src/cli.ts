@@ -118,7 +118,12 @@ class Main {
 			.option('--print <prompt>', 'answer one prompt and exit, printing the answer to the standard output')
 			.option('--list', 'print what was read out of the .paullette folder as JSON, and exit')
 			.option('--expand <command>', 'print the expanded text of a slash command without calling the model')
-			.allowExcessArguments(false);
+			.allowExcessArguments(false)
+			.action(() => {
+				// Nothing to do here. What paullette does without a command is decided below, out of the options.
+				// The empty action is still needed: without one, Commander treats a program that has a command as
+				// a program that must be given one, and answers `paullette --list` with the help text.
+			});
 		Main._addSharedOptions(program);
 
 		let webOptions: WebCommandLineOptions | null = null;

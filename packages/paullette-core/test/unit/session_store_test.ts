@@ -135,4 +135,82 @@ describe('SessionStore', () => {
 
 		Assert.equal(sessionStore.loadNewestSession(), null);
 	});
+
+	///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
+	//	Listing And Reading Back One Session
+	///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
+
+	test('lists nothing when the sessions folder was never made', () => {
+		Assert.deepEqual(sessionStore.listSessions(), []);
+	});
+
+	test('lists one summary per session, without what was said in any of them', () => {
+		const firstSession = sessionStore.startSession('a-model');
+		sessionStore.save(firstSession, [makeHistoryItem('the first thing said')]);
+
+		const summaries = sessionStore.listSessions();
+
+		Assert.equal(summaries.length, 1);
+		Assert.equal(summaries[0]?.identifier, firstSession.identifier);
+		Assert.equal(summaries[0]?.modelName, 'a-model');
+		Assert.equal(summaries[0]?.itemCount, 1);
+		Assert.equal('history' in (summaries[0] ?? {}), false, 'a summary must not carry the conversation');
+	});
+
+	test('lists the newest session first', () => {
+		const olderSession = sessionStore.startSession('an-older-model');
+		sessionStore.save(olderSession, []);
+		const newerSession = sessionStore.startSession('a-newer-model');
+		sessionStore.save(newerSession, []);
+
+		Fs.writeFileSync(
+			Path.join(sessionsFolderPath, `${olderSession.identifier}.json`),
+			JSON.stringify({ ...olderSession, updatedAt: '2000-01-01T00:00:00.000Z', history: [] }),
+			'utf8',
+		);
+
+		const summaries = sessionStore.listSessions();
+
+		Assert.equal(summaries[0]?.identifier, newerSession.identifier);
+		Assert.equal(summaries[1]?.identifier, olderSession.identifier);
+	});
+
+	test('passes over a file that is not a session rather than throwing', () => {
+		const goodSession = sessionStore.startSession('a-model');
+		sessionStore.save(goodSession, []);
+		Fs.writeFileSync(Path.join(sessionsFolderPath, 'broken.json'), '{ this is not JSON', 'utf8');
+		Fs.writeFileSync(Path.join(sessionsFolderPath, 'notes.txt'), 'not a session', 'utf8');
+
+		const summaries = sessionStore.listSessions();
+
+		Assert.equal(summaries.length, 1);
+		Assert.equal(summaries[0]?.identifier, goodSession.identifier);
+	});
+
+	test('reads one session back by its identifier', () => {
+		const storedSession = sessionStore.startSession('a-model');
+		sessionStore.save(storedSession, [makeHistoryItem('what was said')]);
+
+		const readBack = sessionStore.loadSession(storedSession.identifier);
+
+		Assert.equal(readBack?.identifier, storedSession.identifier);
+		Assert.equal(readBack?.history.length, 1);
+	});
+
+	test('says there is no such session rather than throwing when there is none', () => {
+		Assert.equal(sessionStore.loadSession('there-is-no-such-session'), null);
+	});
+
+	test('refuses an identifier that is not the shape a session identifier has', () => {
+		const storedSession = sessionStore.startSession('a-model');
+		sessionStore.save(storedSession, []);
+		Fs.writeFileSync(Path.join(temporaryFolderPath, 'secret.json'), '{"identifier":"secret"}', 'utf8');
+
+		Assert.equal(sessionStore.loadSession('../../secret'), null);
+		Assert.equal(sessionStore.loadSession('..'), null);
+		Assert.equal(sessionStore.loadSession('a/b'), null);
+		Assert.equal(sessionStore.loadSession('a.b'), null);
+	});
 });

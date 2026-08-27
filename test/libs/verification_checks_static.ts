@@ -54,6 +54,88 @@ export class VerificationChecksStatic {
 	}
 
 	/**
+	 * Starts `paullette web`, and asks it for the page, for the script, for the state, and for an address that
+	 * is served by nothing.
+	 *
+	 * No model is called: none of these four requests starts a turn.
+	 *
+	 * @returns Whether the web interface listened and answered.
+	 */
+	static async checkWebInterfaceServed(): Promise<VerificationResult> {
+		const folderPath = PaulletteRunner.makeFixtureFolder();
+		const seen: string[] = [];
+		let failure: string | null = null;
+
+		try {
+			const outcome = await PaulletteRunner.serve({
+				workingDirectoryPath: folderPath,
+				timeoutMilliseconds: 90000,
+				whileServing: async (address) => {
+					const page = await fetch(`${address}/`);
+					const pageText = await page.text();
+					seen.push(`GET / gave ${page.status} ${page.headers.get('content-type')}`);
+					if (page.status !== 200 || pageText.includes('<title>paullette</title>') === false) {
+						failure = 'the page was not served';
+						return;
+					}
+
+					const script = await fetch(`${address}/paullette.js`);
+					seen.push(`GET /paullette.js gave ${script.status} ${script.headers.get('content-type')}`);
+					if (script.status !== 200) {
+						failure = 'the script of the page was not served';
+						return;
+					}
+
+					const state = await fetch(`${address}/api/state`);
+					const stateBody = (await state.json()) as {
+						modelName?: string;
+						messages?: unknown[];
+						isTurnRunning?: boolean;
+					};
+					seen.push(`GET /api/state gave ${state.status} ${JSON.stringify(stateBody)}`);
+					if (state.status !== 200 || stateBody.modelName !== VERIFICATION_MODEL_NAME) {
+						failure = 'the state did not name the model paullette is running with';
+						return;
+					}
+					if (Array.isArray(stateBody.messages) === false || stateBody.messages.length !== 0) {
+						failure = 'a conversation that has just started should hold no message';
+						return;
+					}
+
+					const missing = await fetch(`${address}/there-is-nothing-here`);
+					seen.push(`GET /there-is-nothing-here gave ${missing.status}`);
+					if (missing.status !== 404) {
+						failure = 'an address nothing is served at should give a not found';
+					}
+				},
+			});
+
+			if (outcome.isBuilt === false) {
+				return VerificationResults.pending('packages/paullette-cli/src/cli.ts does not exist yet');
+			}
+
+			if (outcome.capabilities !== null && outcome.capabilities.hasWebInterface !== true) {
+				return VerificationResults.pending('the web interface is not built yet');
+			}
+
+			if (outcome.isServed === false) {
+				return VerificationResults.failed(
+					'the web interface printed no address',
+					`${outcome.standardOutput}\n${outcome.standardError}`,
+				);
+			}
+
+			if (failure !== null) {
+				return VerificationResults.failed(failure, seen.join('\n'));
+			}
+
+			return VerificationResults.passed(`the web interface answered at ${outcome.address}`, seen.join('\n'));
+		} finally {
+			PaulletteRunner.removeFolder(folderPath);
+		}
+	}
+
+	/**
 	 * Asks the endpoint for its model list.
 	 *
 	 * This runs before every check that calls the model, because a dead endpoint makes all of those fail at once

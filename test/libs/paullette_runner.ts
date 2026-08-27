@@ -67,6 +67,45 @@ export type RunRequest = {
 };
 
 /**
+ * The values one run of the web interface needs.
+ */
+export type ServeRequest = {
+	/** The folder paullette runs in, which is also the folder it treats as the project root. */
+	workingDirectoryPath: string;
+	/** Anything to add after `web --port 0`, for example `['--yes']`. */
+	extraArguments?: string[];
+	/**
+	 * Called once the server has printed its address, and awaited before the server is stopped.
+	 *
+	 * @param address The address paullette printed, for example `http://127.0.0.1:53874`.
+	 * @returns Nothing.
+	 */
+	whileServing: (address: string) => Promise<void>;
+	/** How long to wait for the address line before giving up. */
+	timeoutMilliseconds?: number;
+};
+
+/**
+ * What one run of the web interface produced.
+ */
+export type ServeOutcome = {
+	/** False when `packages/paullette-cli/src/cli.ts` does not exist yet. */
+	isBuilt: boolean;
+	/** True when the server printed an address, which is what says the web command exists and listens. */
+	isServed: boolean;
+	/** The address the server printed, or null when it printed none. */
+	address: string | null;
+	/** Everything paullette wrote to its standard output, which holds the address line. */
+	standardOutput: string;
+	/** Everything paullette wrote to its standard error. */
+	standardError: string;
+	/** The folder paullette ran in, so that a step can look at the files it left behind. */
+	workingDirectoryPath: string;
+	/** What paullette said it can currently do, or null when it printed no capability line. */
+	capabilities: PaulletteCapabilities | null;
+};
+
+/**
  * Starts paullette without a terminal and captures what it wrote.
  *
  * Every verification step goes through this class rather than starting paullette itself, so that there is one
@@ -159,6 +198,99 @@ export class PaulletteRunner {
 	}
 
 	/**
+	 * Starts `paullette web`, waits for the address it prints, hands that address to the caller, and stops it.
+	 *
+	 * The port asked for is zero, so that the operating system picks a free one and two verification runs at the
+	 * same time cannot collide. paullette prints the port it really got.
+	 *
+	 * @param request The folder to run in, what to do once the server answers, and the timeout.
+	 * @returns What the run produced, with the standard output holding the address line.
+	 */
+	static async serve(request: ServeRequest): Promise<ServeOutcome> {
+		if (PaulletteRunner.isBuilt() === false) {
+			return {
+				isBuilt: false,
+				isServed: false,
+				address: null,
+				standardOutput: '',
+				standardError: '',
+				workingDirectoryPath: request.workingDirectoryPath,
+				capabilities: null,
+			};
+		}
+
+		const timeoutMilliseconds = request.timeoutMilliseconds ?? 240000;
+
+		const childProcess = ChildProcess.spawn(
+			'npx',
+			[
+				'tsx',
+				'--conditions=development',
+				MAIN_FILE_PATH,
+				'web',
+				'--port',
+				'0',
+				...(request.extraArguments ?? []),
+			],
+			{
+				cwd: request.workingDirectoryPath,
+				stdio: ['ignore', 'pipe', 'pipe'],
+				env: {
+					...process.env,
+					NO_COLOR: '1',
+					PAULLETTE_BASE_URL: VERIFICATION_BASE_URL,
+					PAULLETTE_MODEL: VERIFICATION_MODEL_NAME,
+				},
+			},
+		);
+
+		let standardOutput = '';
+		let standardError = '';
+
+		childProcess.stdout.on('data', (chunk: Buffer) => {
+			standardOutput += chunk.toString('utf8');
+		});
+		childProcess.stderr.on('data', (chunk: Buffer) => {
+			standardError += chunk.toString('utf8');
+		});
+
+		const hasExited = new Promise<void>((resolve) => childProcess.on('close', () => resolve()));
+
+		try {
+			const address = await PaulletteRunner._waitForAddress(
+				() => standardOutput,
+				() => childProcess.exitCode !== null,
+				timeoutMilliseconds,
+			);
+
+			if (address !== null) {
+				await request.whileServing(address);
+			}
+
+			return {
+				isBuilt: true,
+				isServed: address !== null,
+				address: address,
+				standardOutput: standardOutput,
+				standardError: standardError,
+				workingDirectoryPath: request.workingDirectoryPath,
+				capabilities: PaulletteRunner.readCapabilities(standardError),
+			};
+		} finally {
+			childProcess.kill('SIGINT');
+			const wasStopped = await Promise.race([
+				hasExited.then(() => true),
+				new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 15000)),
+			]);
+
+			if (wasStopped === false) {
+				childProcess.kill('SIGKILL');
+				await hasExited;
+			}
+		}
+	}
+
+	/**
 	 * Reads the capability line paullette writes to its standard error on every run.
 	 *
 	 * @param standardError Everything paullette wrote to its standard error.
@@ -180,6 +312,37 @@ export class PaulletteRunner {
 		} catch {
 			return null;
 		}
+	}
+
+	/**
+	 * Waits for the line the web interface writes to its standard output saying where it listens.
+	 *
+	 * @param readStandardOutput Reads everything written so far.
+	 * @param hasExited Says whether the process has already stopped, so that waiting ends instead of timing out.
+	 * @param timeoutMilliseconds How long to wait before giving up.
+	 * @returns The address, or null when none was printed.
+	 */
+	private static async _waitForAddress(
+		readStandardOutput: () => string,
+		hasExited: () => boolean,
+		timeoutMilliseconds: number,
+	): Promise<string | null> {
+		const giveUpAt = Date.now() + timeoutMilliseconds;
+
+		while (Date.now() < giveUpAt) {
+			const addressMatch = readStandardOutput().match(/is served at (http:\/\/\S+)/);
+			if (addressMatch !== null) {
+				return addressMatch[1] ?? null;
+			}
+
+			if (hasExited() === true) {
+				return null;
+			}
+
+			await new Promise((resolve) => setTimeout(resolve, 200));
+		}
+
+		return null;
 	}
 
 	/**

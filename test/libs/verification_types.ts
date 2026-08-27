@@ -154,6 +154,8 @@ export type PaulletteCapabilities = {
 	hasMemory: boolean;
 	/** True once paullette saves the conversation to `.paullette/sessions`. */
 	hasSessions: boolean;
+	/** True once `paullette web` serves the web interface. */
+	hasWebInterface: boolean;
 	/** The names of the Model Context Protocol servers that started, which is empty when none was declared. */
 	modelContextProtocolServerNames: string[];
 };

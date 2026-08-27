@@ -57,6 +57,168 @@ export class VerificationChecksModel {
 	}
 
 	/**
+	 * Holds a whole turn through the web interface: sends a message over a request, reads the answer off the
+	 * server-sent events stream, and answers the permission question over a second request while the turn is
+	 * parked on it.
+	 *
+	 * SARDONYX exists nowhere else, so a file on disk holding it proves the message really reached the agent
+	 * through the web interface, that the permission question really reached the browser side, and that the
+	 * answer to it really released the tool.
+	 *
+	 * @returns Whether the turn ran to the end and the tool wrote the file.
+	 */
+	static async checkWebTurnAnswered(): Promise<VerificationResult> {
+		const folderPath = PaulletteRunner.makeFixtureFolder();
+		const seen: string[] = [];
+		let failure: string | null = null;
+
+		try {
+			const outcome = await PaulletteRunner.serve({
+				workingDirectoryPath: folderPath,
+				timeoutMilliseconds: 90000,
+				whileServing: async (address) => {
+					const streamResponse = await fetch(`${address}/api/events`);
+					if (streamResponse.body === null) {
+						failure = 'the server-sent events stream could not be opened';
+						return;
+					}
+
+					const sendResponse = await fetch(`${address}/api/message`, {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({
+							message:
+								'Write the exact text SARDONYX into a file named web_proof.txt. Then stop.',
+						}),
+					});
+					seen.push(`POST /api/message gave ${sendResponse.status}`);
+
+					if (sendResponse.status !== 202) {
+						failure = 'the message was not accepted';
+						return;
+					}
+
+					failure = await VerificationChecksModel._readWebTurn(address, streamResponse.body, seen);
+				},
+			});
+
+			if (outcome.isBuilt === false) {
+				return VerificationResults.pending('packages/paullette-cli/src/cli.ts does not exist yet');
+			}
+
+			if (outcome.capabilities !== null && outcome.capabilities.hasWebInterface !== true) {
+				return VerificationResults.pending('the web interface is not built yet');
+			}
+
+			if (outcome.isServed === false) {
+				return VerificationResults.failed(
+					'the web interface printed no address',
+					`${outcome.standardOutput}\n${outcome.standardError}`,
+				);
+			}
+
+			if (failure !== null) {
+				return VerificationResults.failed(failure, seen.join('\n'));
+			}
+
+			const proofFilePath = Path.join(folderPath, 'web_proof.txt');
+			if (Fs.existsSync(proofFilePath) === false) {
+				return VerificationResults.failed('the tool never wrote the file', seen.join('\n'));
+			}
+
+			const writtenText = Fs.readFileSync(proofFilePath, 'utf8');
+			if (writtenText.toUpperCase().includes('SARDONYX') === false) {
+				return VerificationResults.failed(
+					`the file holds ${JSON.stringify(writtenText)} rather than the word that was asked for`,
+					seen.join('\n'),
+				);
+			}
+
+			return VerificationResults.passed(
+				'a whole turn ran through the web interface, permission and all',
+				seen.join('\n'),
+			);
+		} finally {
+			PaulletteRunner.removeFolder(folderPath);
+		}
+	}
+
+	/**
+	 * Reads the server-sent events stream of one turn, answering the permission question when it arrives.
+	 *
+	 * @param address The address the web interface printed.
+	 * @param body The stream the browser reads.
+	 * @param seen The lines to report when the check fails.
+	 * @returns Why the turn did not run to the end, or null when it did.
+	 */
+	private static async _readWebTurn(
+		address: string,
+		body: ReadableStream<Uint8Array>,
+		seen: string[],
+	): Promise<string | null> {
+		const reader = body.getReader();
+		const textDecoder = new TextDecoder();
+		let buffered = '';
+		let wasPermissionAsked = false;
+		let hasTurnEnded = false;
+
+		while (hasTurnEnded === false) {
+			const readResult = await reader.read();
+			if (readResult.done === true) {
+				break;
+			}
+
+			buffered += textDecoder.decode(readResult.value, { stream: true });
+			const blocks = buffered.split('\n\n');
+			buffered = blocks.pop() ?? '';
+
+			for (const block of blocks) {
+				const dataMatch = block.match(/^data: (.+)$/m);
+				if (dataMatch === null || dataMatch[1] === undefined) {
+					continue;
+				}
+
+				const event = JSON.parse(dataMatch[1]) as Record<string, unknown>;
+				const kind = String(event['kind']);
+
+				if (kind === 'text') {
+					continue;
+				}
+
+				seen.push(`event ${kind} ${dataMatch[1].slice(0, 160)}`);
+
+				if (kind === 'permissionRequested') {
+					wasPermissionAsked = true;
+					const answerResponse = await fetch(`${address}/api/permission`, {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ identifier: event['identifier'], decision: 'allowed' }),
+					});
+					seen.push(`POST /api/permission gave ${answerResponse.status}`);
+					continue;
+				}
+
+				if (kind === 'turnEnded') {
+					hasTurnEnded = true;
+					break;
+				}
+			}
+		}
+
+		await reader.cancel();
+
+		if (wasPermissionAsked === false) {
+			return 'no permission question ever reached the browser side';
+		}
+
+		if (hasTurnEnded === false) {
+			return 'the turn never ended';
+		}
+
+		return null;
+	}
+
+	/**
 	 * Asks the agent to read a file whose content exists nowhere else, so the answer proves the tool ran.
 	 *
 	 * @returns Whether the answer held the secret word from the file.

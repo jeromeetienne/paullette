@@ -60,6 +60,13 @@ export class VerificationSteps {
 				run: VerificationChecksStatic.checkCommandExpanded,
 			},
 			{
+				name: 'webInterfaceServed',
+				title: 'The web command serves the page, the script, and the state of the conversation',
+				planStepNumber: 11,
+				isModelNeeded: false,
+				run: VerificationChecksStatic.checkWebInterfaceServed,
+			},
+			{
 				name: 'oneShotAnswer',
 				title: 'The one-shot mode reaches the model and prints its answer',
 				planStepNumber: 5,
@@ -114,6 +121,13 @@ export class VerificationSteps {
 				planStepNumber: 10,
 				isModelNeeded: true,
 				run: VerificationChecksModel.checkSessionSaved,
+			},
+			{
+				name: 'webTurnAnswered',
+				title: 'A whole turn runs through the web interface, permission question and all',
+				planStepNumber: 11,
+				isModelNeeded: true,
+				run: VerificationChecksModel.checkWebTurnAnswered,
 			},
 			{
 				name: 'sessionResumed',
