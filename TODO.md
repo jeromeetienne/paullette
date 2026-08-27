@@ -73,15 +73,15 @@ The goal is the smallest thing that proves the whole chain works: command line t
 
 ## Milestone 5 — history on disk
 
-- [ ] `src/libs/history/history_types.ts` and `session_store.ts` → verification step `sessionSaved`, `sessionResumed`
-- [ ] `src/libs/history/input_history_store.ts`
-- [ ] Saving the session when the interrupt key is pressed twice and when the input stream closes
+- [x] `src/libs/history/history_types.ts` and `session_store.ts` → verification step `sessionSaved`, `sessionResumed`
+- [x] `src/libs/history/input_history_store.ts`
 
 ## Milestone 6 — the interactive command line interface
 
 - [ ] `src/libs/cli/conversation_session.ts`, `output_renderer.ts`, `readline_interface.ts`
 - [ ] `src/libs/cli/slash_command_handler.ts` — `/help` and `/exit` first, then `/clear`, `/agents`, `/skills`, `/memory`
 - [ ] The `--expand` option, printing an expanded slash command without calling the model → verification step `commandExpanded`
+- [ ] Quitting on the interrupt key pressed twice and on the input stream closing, both saving the session first. Moved here from Milestone 5: a second press of the interrupt key only means anything once there is a loop to interrupt. The one-shot mode already handles a single press, and the conversation is written to disk before the model is called, so nothing is lost whenever doublure is stopped.
 
 ## Milestone 7 — the finish
 

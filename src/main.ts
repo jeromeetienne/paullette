@@ -1,7 +1,7 @@
 #!/usr/bin/env -S npx tsx
 import Path from 'node:path';
 
-import { run } from '@openai/agents';
+import { run, user } from '@openai/agents';
 import { Command } from 'commander';
 
 import { AgentBuilder } from './libs/agent/agent_builder.ts';
@@ -12,6 +12,8 @@ import { ConfigLoader } from './libs/config/config_loader.ts';
 import { type DoublureConfig } from './libs/config/config_types.ts';
 import { DoublureFolderReader } from './libs/doublure_folder/doublure_folder_reader.ts';
 import { type DoublureFolderContent } from './libs/doublure_folder/doublure_folder_types.ts';
+import { SessionStore } from './libs/history/session_store.ts';
+import { type StoredSession } from './libs/history/history_types.ts';
 import { MemoryStore } from './libs/memory/memory_store.ts';
 import { MemoryTools } from './libs/tools/memory_tools.ts';
 import { SkillTools } from './libs/tools/skill_tools.ts';
@@ -33,6 +35,8 @@ type CommandLineOptions = {
 	print?: string;
 	/** True to print what was read out of the `.doublure` folder as JSON and exit. */
 	list?: boolean;
+	/** True to carry on the newest conversation instead of starting a new one. */
+	resume?: boolean;
 	/** True to approve every permission request instead of asking. */
 	yes?: boolean;
 	/** The identifier of the model to use, overriding the environment and the default. */
@@ -59,6 +63,10 @@ type StartedSession = {
 	tools: BuiltTool[];
 	/** The store holding everything remembered about this project. */
 	memoryStore: MemoryStore;
+	/** The store the conversation is written to. */
+	sessionStore: SessionStore;
+	/** The conversation being held, either newly started or read back from disk. */
+	storedSession: StoredSession;
 };
 
 /**
@@ -78,6 +86,7 @@ class Main {
 			.description('A coding agent that reads a .doublure folder and runs on any OpenAI API compatible endpoint')
 			.option('--print <prompt>', 'answer one prompt and exit, printing the answer to the standard output')
 			.option('--list', 'print what was read out of the .doublure folder as JSON, and exit')
+			.option('--resume', 'carry on the newest conversation in .doublure/sessions instead of starting a new one')
 			.option('--yes', 'approve every permission request instead of asking')
 			.option('--model <name>', 'the identifier of the model to use')
 			.option('--base-url <address>', 'the base address of the OpenAI API compatible endpoint')
@@ -90,6 +99,7 @@ class Main {
 
 		const session = Main._start(options);
 		Main._reportCapabilities(session);
+		Main._installInterruptHandler(session);
 
 		if (options.list === true) {
 			Main._printList(session);
@@ -142,6 +152,10 @@ class Main {
 		};
 
 		const memoryStore = new MemoryStore(Path.join(content.paths.doublureFolderPath, 'memory'));
+		const sessionStore = new SessionStore(Path.join(content.paths.doublureFolderPath, 'sessions'));
+
+		const resumedSession = options.resume === true ? sessionStore.loadNewestSession() : null;
+		const storedSession = resumedSession ?? sessionStore.startSession(config.modelName);
 
 		const ordinaryTools = ToolRegistry.createAll(toolContext);
 		const tools = [
@@ -161,6 +175,8 @@ class Main {
 			toolContext: toolContext,
 			tools: tools,
 			memoryStore: memoryStore,
+			sessionStore: sessionStore,
+			storedSession: storedSession,
 		};
 	}
 
@@ -236,8 +252,11 @@ class Main {
 			tools: session.tools,
 		});
 
+		const inputItems = [...session.storedSession.history, user(prompt)];
+		session.sessionStore.save(session.storedSession, inputItems);
+
 		try {
-			const result = await run(agent, prompt, {
+			const result = await run(agent, inputItems, {
 				stream: true,
 				maxTurns: session.config.maximumTurnCount,
 			});
@@ -247,6 +266,8 @@ class Main {
 			}
 			await result.completed;
 			process.stdout.write('\n');
+
+			session.sessionStore.save(session.storedSession, result.history);
 		} catch (caughtError) {
 			const reason = caughtError instanceof Error ? caughtError.message : String(caughtError);
 			process.stderr.write(`doublure could not answer: ${reason}\n`);
@@ -259,6 +280,28 @@ class Main {
 	//	Helpers
 	///////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Makes the interrupt key end doublure without losing the conversation.
+	 *
+	 * Nothing has to be written here, because the conversation is written to disk before the model is called
+	 * rather than only after it answers. That is the whole point of saving at the start of a turn: whenever
+	 * doublure is stopped, the file on disk already holds everything said up to that moment.
+	 *
+	 * @param session Everything built at startup.
+	 * @returns Nothing.
+	 */
+	private static _installInterruptHandler(session: StartedSession): void {
+		process.on('SIGINT', () => {
+			const filePath = Path.join(
+				session.content.paths.doublureFolderPath,
+				'sessions',
+				`${session.storedSession.identifier}.json`,
+			);
+			process.stderr.write(`\ndoublure stopped. The conversation so far is in ${filePath}\n`);
+			process.exit(130);
+		});
+	}
 
 	/**
 	 * Writes one line to the standard error saying what doublure can currently do.
@@ -274,7 +317,7 @@ class Main {
 		const capabilities = {
 			toolNames: session.tools.map((builtTool) => ('name' in builtTool ? builtTool.name : 'unknown')),
 			hasMemory: true,
-			hasSessions: false,
+			hasSessions: true,
 		};
 		process.stderr.write(`doublure-capabilities: ${JSON.stringify(capabilities)}\n`);
 	}
