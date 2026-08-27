@@ -1,5 +1,14 @@
+# Dependencies installed by npm. They are rebuilt from package.json and package-lock.json.
 node_modules/
+
+# Build output produced by the TypeScript compiler.
 dist/
+
+# Local environment variables, such as API keys. They must never be committed.
 .env
+
+# Folder metadata files created by the macOS Finder.
 .DS_Store
+
+# Local Claude Code settings for this machine only. The shared settings.json is committed.
 .claude/settings.local.json
