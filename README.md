@@ -26,6 +26,17 @@ Point it at another endpoint and another model:
 npx paullette --base-url https://api.openai.com/v1 --api-key sk-your-key --model gpt-4o-mini
 ```
 
+## Documentation
+
+| Page | What it is for |
+| --- | --- |
+| [`docs/paullette_folder.md`](docs/paullette_folder.md) | The format reference of the `.paullette` folder: every frontmatter field of a subagent, a slash command, a skill, and a memory file, and what each one falls back to. |
+| [`docs/mcp_server.md`](docs/mcp_server.md) | How to declare a Model Context Protocol server, both transports, how the three source files are merged, and what happens when a server does not start. |
+| [`docs/architecture.md`](docs/architecture.md) | How the parts of paullette fit together, in what order they run, and why each boundary is where it is. For somebody working on paullette itself. |
+| [`docs/testing.md`](docs/testing.md) | The two test suites, what each one is good at, what neither covers, and how to add to either. |
+
+The index of all of them is [`docs/README.md`](docs/README.md). The rest of this page is the short version.
+
 ## Command line options
 
 | Option | What it does |
