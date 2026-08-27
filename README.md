@@ -50,7 +50,7 @@ The index of all of them is [`docs/README.md`](docs/README.md). The rest of this
 
 | Command | What it does |
 | --- | --- |
-| `web` | Start a local web server, print its address, and serve the web interface until the interrupt key stops it. It takes `--port <number>`, `3000` by default, and `--host <address>`, `127.0.0.1` by default, along with every option below. |
+| `web` | Start a local web server, print its address, and serve the web interface until the interrupt key stops it. It takes `--port <number>`, `5000` by default, and `--host <address>`, `127.0.0.1` by default, along with every option below. |
 
 | Option | What it does |
 | --- | --- |

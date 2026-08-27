@@ -1,4 +1,4 @@
-import type Http from 'node:http';
+import Express from 'express';
 
 import { type PermissionDecision } from 'paullette-core/tools/tool_types';
 import { type WebConversation } from './web_conversation.ts';
@@ -8,33 +8,21 @@ import { type MessageRequestBody, type PermissionRequestBody } from './web_types
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-//	WebRouter — matches one method and one path to one answer
+//	WebRouter — the Express router holding every route of the web interface
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * The largest body the server reads from a browser, in characters. A message a person types is short, and a
- * body without a limit is a way to make the server hold as much memory as the sender likes.
+ * The largest body the server reads from a browser. A message a person types is short, and a body without a
+ * limit is a way to make the server hold as much memory as the sender likes.
  */
-const MAXIMUM_BODY_CHARACTER_COUNT = 200000;
+const MAXIMUM_BODY_SIZE = '200kb';
 
 /**
- * What the router decided to answer, when the answer is not a stream.
- */
-export type RoutedAnswer = {
-	/** The status of the answer. */
-	statusCode: number;
-	/** What the answer is. */
-	contentType: string;
-	/** The bytes of the answer. */
-	content: string | Buffer;
-};
-
-/**
- * Matches one method and one path to one answer.
+ * Every route of the web interface, as an Express router.
  *
- * The stream at `/api/events` is the one path this class does not answer on its own, because it takes over the
- * request and holds it open. Everything else is a body written once.
+ * The stream at `/api/events` is the one route that does not answer and end. It takes the answer over and holds
+ * it open until the browser goes away. Everything else is a body written once.
  */
 export class WebRouter {
 	/** The conversation every browser shares. */
@@ -54,198 +42,246 @@ export class WebRouter {
 	}
 
 	/**
-	 * Answers one request.
+	 * Builds the Express router: the body reader, every route, the not found, and the last resort.
 	 *
-	 * @param incomingMessage The request the browser made.
-	 * @param serverResponse The answer being built, needed only by the stream, which takes it over.
-	 * @returns The answer to write, or null when the request has been taken over by the stream.
+	 * Everything is in the one router rather than spread over the application, so that what the unit tests mount
+	 * is the whole of what the server mounts.
+	 *
+	 * @returns The router to mount.
 	 */
-	async route(
-		incomingMessage: Http.IncomingMessage,
-		serverResponse: Http.ServerResponse,
-	): Promise<RoutedAnswer | null> {
-		const method = incomingMessage.method ?? 'GET';
-		const pathName = new URL(incomingMessage.url ?? '/', 'http://127.0.0.1').pathname;
+	build(): Express.Router {
+		const router = Express.Router();
 
-		if (method === 'GET' && pathName === '/api/events') {
-			this._eventStream.open(serverResponse);
-			return null;
-		}
+		router.use((request, response, next) => {
+			response.set('cache-control', 'no-store');
+			next();
+		});
 
-		if (method === 'GET' && pathName === '/api/state') {
-			return WebRouter._json(200, this._conversation.readState());
-		}
+		router.use(
+			Express.json({
+				limit: MAXIMUM_BODY_SIZE,
+				type: () => true,
+			}),
+		);
+		router.use(WebRouter._answerBodyThatCouldNotBeRead);
 
-		if (method === 'GET' && pathName === '/api/sessions') {
-			return WebRouter._json(200, {
+		this._addStreamRoute(router);
+		this._addStateRoutes(router);
+		this._addTurnRoutes(router);
+		WebRouter._addStaticFileRoutes(router);
+
+		router.use(WebRouter._answerNotFound);
+		router.use(WebRouter._answerCaughtError);
+
+		return router;
+	}
+
+	///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
+	//	The Routes
+	///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Adds the route that hands the request to the stream.
+	 *
+	 * @param router The router being built.
+	 * @returns Nothing.
+	 */
+	private _addStreamRoute(router: Express.Router): void {
+		router.get('/api/events', (request, response) => {
+			this._eventStream.open(response);
+		});
+	}
+
+	/**
+	 * Adds the routes that only read: the state of the conversation and the past conversations.
+	 *
+	 * @param router The router being built.
+	 * @returns Nothing.
+	 */
+	private _addStateRoutes(router: Express.Router): void {
+		router.get('/api/state', (request, response) => {
+			response.status(200).json(this._conversation.readState());
+		});
+
+		router.get('/api/sessions', (request, response) => {
+			response.status(200).json({
 				sessions: this._conversation.listSessions(),
 			});
-		}
+		});
 
-		if (method === 'GET' && pathName.startsWith('/api/sessions/') === true) {
-			const identifier = decodeURIComponent(pathName.slice('/api/sessions/'.length));
+		router.get('/api/sessions/:identifier', (request, response) => {
+			const identifier = request.params.identifier;
 			const messages = this._conversation.readSessionMessages(identifier);
 
 			if (messages === null) {
-				return WebRouter._json(404, {
+				response.status(404).json({
 					error: 'There is no such conversation.',
 				});
+				return;
 			}
 
-			return WebRouter._json(200, {
+			response.status(200).json({
 				identifier: identifier,
 				messages: messages,
 			});
-		}
+		});
+	}
 
-		if (method === 'POST' && pathName === '/api/message') {
-			return await this._routeMessage(incomingMessage);
-		}
+	/**
+	 * Adds the two routes a browser writes to: the one that starts a turn and the one that answers a question.
+	 *
+	 * @param router The router being built.
+	 * @returns Nothing.
+	 */
+	private _addTurnRoutes(router: Express.Router): void {
+		router.post('/api/message', (request, response) => {
+			const body = request.body as MessageRequestBody | undefined;
 
-		if (method === 'POST' && pathName === '/api/permission') {
-			return await this._routePermission(incomingMessage);
-		}
-
-		if (method === 'GET') {
-			const staticFile = WebStaticFiles.read(pathName);
-			if (staticFile !== null) {
-				return {
-					statusCode: 200,
-					contentType: staticFile.contentType,
-					content: staticFile.content,
-				};
+			if (body === undefined || typeof body.message !== 'string') {
+				response.status(400).json({
+					error: 'The body must be an object holding a message, as text.',
+				});
+				return;
 			}
-		}
 
-		return WebRouter._json(404, {
+			const outcome = this._conversation.sendMessage(body.message);
+
+			if (outcome.isStarted === false) {
+				response.status(409).json({
+					error: outcome.refusedReason,
+				});
+				return;
+			}
+
+			response.status(202).json({
+				started: true,
+			});
+		});
+
+		router.post('/api/permission', (request, response) => {
+			const body = request.body as (PermissionRequestBody & { isAlways?: boolean }) | undefined;
+
+			if (body === undefined || typeof body.identifier !== 'string') {
+				response.status(400).json({
+					error: 'The body must be an object holding an identifier and a decision.',
+				});
+				return;
+			}
+
+			const decision: PermissionDecision = body.decision === 'allowed' ? 'allowed' : 'refused';
+			const wasAnswered = this._conversation.answerPermission(
+				body.identifier,
+				decision,
+				body.isAlways === true,
+			);
+
+			if (wasAnswered === false) {
+				response.status(404).json({
+					error: 'There is no question waiting under that identifier.',
+				});
+				return;
+			}
+
+			response.status(200).json({
+				answered: true,
+			});
+		});
+	}
+
+	/**
+	 * Adds one route for each file the browser may ask for.
+	 *
+	 * One whole path is registered per file, and `express.static` is never used, so that no path arriving from a
+	 * web address is ever resolved against a folder. There is nothing to climb out of.
+	 *
+	 * @param router The router being built.
+	 * @returns Nothing.
+	 */
+	private static _addStaticFileRoutes(router: Express.Router): void {
+		for (const servedPath of WebStaticFiles.servedPaths()) {
+			router.get(servedPath, (request, response, next) => {
+				const staticFile = WebStaticFiles.read(servedPath);
+
+				if (staticFile === null) {
+					next();
+					return;
+				}
+
+				response.status(200).type(staticFile.contentType).send(staticFile.content);
+			});
+		}
+	}
+
+	///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
+	//	The Answers That Are Not A Route
+	///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * Answers a body that is too long, or that is not JSON, with a sentence the sender can read.
+	 *
+	 * The body reader of Express throws rather than handing on a body it could not read. Without this the sender
+	 * would be told nothing but a number, and the reason would be in the log of the server instead.
+	 *
+	 * @param caughtError What the body reader threw.
+	 * @param request The request the browser made.
+	 * @param response The answer being written.
+	 * @param next The next handler. It is never called, and is declared because Express reads the number of
+	 *   parameters to tell a handler of an error from an ordinary one.
+	 * @returns Nothing.
+	 */
+	private static _answerBodyThatCouldNotBeRead(
+		caughtError: Error,
+		request: Express.Request,
+		response: Express.Response,
+		next: Express.NextFunction,
+	): void {
+		response.status(400).json({
+			error: 'The body must be JSON, and no longer than 200kb.',
+		});
+	}
+
+	/**
+	 * Answers every address nothing is served at.
+	 *
+	 * @param request The request the browser made.
+	 * @param response The answer being written.
+	 * @returns Nothing.
+	 */
+	private static _answerNotFound(request: Express.Request, response: Express.Response): void {
+		response.status(404).json({
 			error: 'There is nothing at that address.',
 		});
 	}
 
-	///////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////
-	//	The Routes That Read A Body
-	///////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////
-
 	/**
-	 * Starts one turn with the message the browser sent.
+	 * Answers anything thrown out of a route, and never lets it reach the runtime.
 	 *
-	 * @param incomingMessage The request the browser made.
-	 * @returns The answer to write.
+	 * @param caughtError What was thrown.
+	 * @param request The request the browser made.
+	 * @param response The answer being written.
+	 * @param next The next handler, used when the answer has already started.
+	 * @returns Nothing.
 	 */
-	private async _routeMessage(incomingMessage: Http.IncomingMessage): Promise<RoutedAnswer> {
-		const body = await WebRouter._readJsonBody<MessageRequestBody>(incomingMessage);
+	private static _answerCaughtError(
+		caughtError: unknown,
+		request: Express.Request,
+		response: Express.Response,
+		next: Express.NextFunction,
+	): void {
+		const reason = caughtError instanceof Error ? caughtError.message : String(caughtError);
+		process.stderr.write(`paullette-web: the request could not be answered: ${reason}\n`);
 
-		if (body === null || typeof body.message !== 'string') {
-			return WebRouter._json(400, {
-				error: 'The body must be an object holding a message, as text.',
-			});
+		if (response.headersSent === true) {
+			next(caughtError);
+			return;
 		}
 
-		const outcome = this._conversation.sendMessage(body.message);
-
-		if (outcome.isStarted === false) {
-			return WebRouter._json(409, {
-				error: outcome.refusedReason,
-			});
-		}
-
-		return WebRouter._json(202, {
-			started: true,
+		response.status(500).json({
+			error: 'The request could not be answered.',
 		});
-	}
-
-	/**
-	 * Answers one waiting permission question.
-	 *
-	 * @param incomingMessage The request the browser made.
-	 * @returns The answer to write.
-	 */
-	private async _routePermission(incomingMessage: Http.IncomingMessage): Promise<RoutedAnswer> {
-		const body = await WebRouter._readJsonBody<PermissionRequestBody & { isAlways?: boolean }>(
-			incomingMessage,
-		);
-
-		if (body === null || typeof body.identifier !== 'string') {
-			return WebRouter._json(400, {
-				error: 'The body must be an object holding an identifier and a decision.',
-			});
-		}
-
-		const decision: PermissionDecision = body.decision === 'allowed' ? 'allowed' : 'refused';
-		const wasAnswered = this._conversation.answerPermission(
-			body.identifier,
-			decision,
-			body.isAlways === true,
-		);
-
-		if (wasAnswered === false) {
-			return WebRouter._json(404, {
-				error: 'There is no question waiting under that identifier.',
-			});
-		}
-
-		return WebRouter._json(200, {
-			answered: true,
-		});
-	}
-
-	///////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////
-	//	Helpers
-	///////////////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////
-
-	/**
-	 * Builds an answer carrying JSON.
-	 *
-	 * @param statusCode The status of the answer.
-	 * @param value What to write.
-	 * @returns The answer to write.
-	 */
-	private static _json(statusCode: number, value: unknown): RoutedAnswer {
-		return {
-			statusCode: statusCode,
-			contentType: 'application/json; charset=utf-8',
-			content: JSON.stringify(value),
-		};
-	}
-
-	/**
-	 * Reads the body of a request and parses it as JSON.
-	 *
-	 * A body that is too long, or that is not JSON, gives null rather than throwing, so that a caller answers
-	 * with a sentence the sender can read instead of the server falling over.
-	 *
-	 * @param incomingMessage The request the browser made.
-	 * @returns What the body held, or null when it could not be read.
-	 */
-	private static async _readJsonBody<TBody>(incomingMessage: Http.IncomingMessage): Promise<TBody | null> {
-		const bodyText = await new Promise<string | null>((resolve) => {
-			let collected = '';
-
-			incomingMessage.on('data', (chunk: Buffer | string) => {
-				collected += String(chunk);
-
-				if (collected.length > MAXIMUM_BODY_CHARACTER_COUNT) {
-					resolve(null);
-					incomingMessage.destroy();
-				}
-			});
-			incomingMessage.on('end', () => resolve(collected));
-			incomingMessage.on('error', () => resolve(null));
-		});
-
-		if (bodyText === null) {
-			return null;
-		}
-
-		try {
-			const parsed = JSON.parse(bodyText) as unknown;
-			return typeof parsed === 'object' && parsed !== null ? (parsed as TBody) : null;
-		} catch {
-			return null;
-		}
 	}
 }

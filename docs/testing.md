@@ -29,9 +29,9 @@ They run on the Node.js test runner, through `node --import tsx --conditions=dev
 
 ### The rules a unit test follows
 
-- **It never calls a model and never reaches the network.** The whole suite runs in seconds and needs nothing running.
+- **It never calls a model and never reaches a machine other than this one.** The whole suite runs in seconds and needs nothing running.
 - **It never writes into the repository.** It writes into a folder made by `TemporaryFolder` and removes it in an `afterEach`. `TemporaryFolder.remove` refuses any path it did not make itself, so a test cannot delete a folder whose path it computed wrongly.
-- **It never starts a web server on a fixed port.** The tests of `paullette-web` call the router, the permission asker, and the static file server directly, so two test runs at the same time cannot collide. Whether a whole turn really reaches a browser is asked by the verification runner instead, which is the only place that whole chain exists.
+- **It never starts a web server on a fixed port.** `web_router_test.ts` starts the Express application of `paullette-web` on the port the operating system gives it and asks it over the loopback address, and the other tests of that package call the permission asker and the static file server directly, so two test runs at the same time cannot collide. Whether a whole turn really reaches a browser is asked by the verification runner instead, which is the only place that whole chain exists.
 - **It never reads a constant out of the code it is testing to build the value it then asserts on.** A cap or a default is written out again in the test. Otherwise changing the code changes the test with it, and the test only ever agrees with itself.
 - **It calls a tool through `ToolHarness.invoke`**, the way the software development kit calls it, with the arguments as JSON — so that the schema of the tool is part of what is tested, not only its body.
 - **It wraps anything that prints to the standard error in `StandardErrorCapture.run`**, so the output of the test run stays readable.

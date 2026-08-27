@@ -4,7 +4,7 @@
 
 ```
 $ npx paullette web
-paullette web interface is served at http://127.0.0.1:3000
+paullette web interface is served at http://127.0.0.1:5000
 ```
 
 Open that address in a browser. The page holds the conversation, shows a permission question as a form, and lists the conversations already saved in `.paullette/sessions`.
@@ -13,7 +13,7 @@ Open that address in a browser. The page holds the conversation, shows a permiss
 
 | Option | What it does |
 | --- | --- |
-| `--port <number>` | The port to listen on. `3000` by default. `0` asks the operating system for a free one, and paullette prints the port it got. |
+| `--port <number>` | The port to listen on. `5000` by default. `0` asks the operating system for a free one, and paullette prints the port it got. |
 | `--host <address>` | The address to listen on. `127.0.0.1` by default. |
 
 Every option the other modes accept works here too, on either side of the command name: `paullette --yes web` and `paullette web --yes` do the same thing. So do `--resume`, `--model`, `--base-url`, `--api-key`, and `--max-turns`.
@@ -27,7 +27,7 @@ The agent behind this server writes files and runs shell commands on the machine
 ```
 $ paullette web --host 0.0.0.0
 paullette-warning: listening on 0.0.0.0 rather than 127.0.0.1. Anyone who can reach that address can make paullette run shell commands on this machine.
-paullette web interface is served at http://127.0.0.1:3000
+paullette web interface is served at http://127.0.0.1:5000
 ```
 
 ## What the browser and the server say to each other
@@ -36,7 +36,7 @@ The browser reads one stream and sends everything it has to say in an ordinary r
 
 | Method and path | What it does |
 | --- | --- |
-| `GET /` | The page. `GET /paullette.css` and `GET /paullette.js` are the other two files. |
+| `GET /` | The page. `GET /bootstrap.css`, `GET /paullette.css`, and `GET /paullette.js` are the other three files. |
 | `GET /api/events` | The stream of everything that happens in the conversation, as server-sent events. |
 | `GET /api/state` | The conversation so far and the question waiting for an answer, for a browser that has just connected. |
 | `POST /api/message` | Starts one turn. It answers `202` at once and does not wait for the turn. |
@@ -46,7 +46,9 @@ The browser reads one stream and sends everything it has to say in an ordinary r
 
 The events written on the stream: `turnStarted`, `text`, `toolCalled`, `toolOutput`, `permissionRequested`, `permissionAnswered`, `answerRendered`, `turnEnded`, and `error`.
 
-Server-sent events were chosen over a websocket because the stream only ever runs one way, from the server to the browser. Everything the browser has to say fits in a short request, and `node:http` serves a server-sent events stream with no dependency at all, while Node.js has no websocket server of its own.
+The routes are an Express router, mounted on an Express application that `node:http` serves. Nothing else is mounted on that application, no compression above all: the stream at `/api/events` has to reach the browser as each event is written, and a compressor holds what it is given until it has enough of it to be worth compressing.
+
+Server-sent events were chosen over a websocket because the stream only ever runs one way, from the server to the browser. Everything the browser has to say fits in a short request.
 
 ## One permission question, answered from a second request
 
@@ -102,6 +104,20 @@ The escaping happens **inside** the renderer and not before it. Escaping the tex
 
 The page itself never builds HTML out of text. The HTML of an answer always comes from the server, which has already made sure of all of the above.
 
+## What the page looks like: Bootstrap, and forty lines of our own
+
+Everything the page looks like comes from Bootstrap. It is a dependency of `paullette-web`, and it is read off the disk of the machine paullette runs on, at `node_modules/bootstrap/dist/css/bootstrap.min.css`, never fetched from a content delivery network. The server listens on the loopback address by default, and a page that needed the internet to look right would be wrong.
+
+The elements of the page carry Bootstrap classes and nothing else, and `public/paullette.css` holds three rules. Each one is there because no Bootstrap class can reach what it does, and each one says so beside itself:
+
+| The rule | Why it cannot be a Bootstrap class |
+| --- | --- |
+| The borders of a table inside an answer | The HTML of an answer is written by `marked`, which puts a class on nothing, and Bootstrap styles a table only through the class `table`. |
+| `white-space: pre-wrap` while an answer streams | Bootstrap has a class for wrapping and one for not wrapping, and none for keeping the spacing of the text as it was written. |
+| A cap on the height of the detail of a permission question | Bootstrap has no class that caps a height, and the detail can be a whole file, which would push the three buttons off the bottom of the screen. |
+
+Bootstrap follows the light or dark setting of the machine for nothing on its own: it reads `data-bs-theme` off the `html` element. Six lines at the top of `index.html` set that attribute from `prefers-color-scheme` and follow it when it changes. They run in the head of the page, before it is drawn, so that a person who has asked for a dark screen is never shown a white one first.
+
 ## Where the files are
 
 ```
@@ -109,13 +125,13 @@ packages/paullette-web/
 	src/web_interface.ts          WebInterface.start(), the one thing paullette-cli imports
 	src/server/                   the server, the routes, the stream, the permission asker, the Markdown
 	public/index.html             the page
-	public/paullette.css          the stylesheet
+	public/paullette.css          the three rules Bootstrap cannot reach
 	public/paullette.js           the script, plain JavaScript, sent to the browser as it is
 ```
 
 `public/` sits beside `src/` and never inside it, because `tsc` copies no file that is not TypeScript. It is found at run time with `Path.join(import.meta.dirname, '..', '..', 'public')`, which resolves the same way from `src/server/` during development and from `dist/server/` once published.
 
-The list of files the server will send is written out in `web_static_files.ts`. No path from a web address is ever resolved against a folder, so there is nothing to climb out of. `SessionStore.loadSession` takes the same care: it refuses any identifier that is not the shape `startSession` makes, because that identifier arrives from `GET /api/sessions/<identifier>`.
+The list of files the server will send is written out in `web_static_files.ts`, and the router registers one route for each whole path in it. `express.static` is never used, and no path from a web address is ever resolved against a folder, so there is nothing to climb out of. `SessionStore.loadSession` takes the same care: it refuses any identifier that is not the shape `startSession` makes, because that identifier arrives from `GET /api/sessions/<identifier>`.
 
 ## What it does not do yet
 
@@ -130,6 +146,6 @@ Two verification steps, both in `npm run verify`:
 - `webInterfaceServed` calls no model. It starts `paullette web --port 0` and asks for the page, the script, the state, and an address nothing is served at.
 - `webTurnAnswered` holds a whole turn: it opens the stream, sends a message, answers the permission question over a second request while the turn is parked on it, waits for `turnEnded`, and then reads the file the tool wrote off the disk.
 
-The unit tests of `packages/paullette-web` never start a server on a fixed port and never call a model. The full account of both suites is in [`testing.md`](testing.md).
+The unit tests of `packages/paullette-web` never call a model, and the one that asks the routes for an answer starts the Express application on a port the operating system chooses, so that two test runs at once cannot collide. The full account of both suites is in [`testing.md`](testing.md).
 
 The design of all of this, and the live test that proved the parked promise could be released from a second request before any of it was written, are in the plan on [issue #9](https://github.com/jeromeetienne/paullette/issues/9).
