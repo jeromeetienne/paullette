@@ -1,4 +1,4 @@
-# Directory Context: `/src/cli`
+# Directory Context: `/src/terminal`
 
 ## Purpose
 Everything that talks to the person at the terminal: asking permission, reading what they type, and printing what the agent says.

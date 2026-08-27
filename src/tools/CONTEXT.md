@@ -10,7 +10,7 @@ Holds every tool the agent can call: reading and changing files, searching, and 
 - `file_tools.ts`, `search_tools.ts`, `shell_tools.ts`: the tools themselves, each exposing `createAll(context)`.
 
 ## Rules
-- Nothing here imports from `cli/`. A tool asks for permission through the `PermissionAsker` interface declared in `tool_types.ts`, and `cli/permission_prompt.ts` implements it. Turning that around would make the tools impossible to use from anywhere but a terminal.
+- Nothing here imports from `terminal/`. A tool asks for permission through the `PermissionAsker` interface declared in `tool_types.ts`, and `terminal/permission_prompt.ts` implements it. Turning that around would make the tools impossible to use from anywhere but a terminal.
 - Every tool that takes a path resolves it with `ToolPaths.resolveInside`, which refuses a path outside the working folder. The model chooses these paths, and a small model asked to read a project file will produce `../../` sooner or later.
 - Every tool that changes a file or runs a shell command asks the permission asker first, and returns a sentence telling the model not to try again when the answer is no.
 - A tool returns a readable sentence when something goes wrong rather than throwing, so that the model can try something else instead of the whole turn ending on one bad path.

@@ -55,7 +55,7 @@ The goal is the smallest thing that proves the whole chain works: command line t
 - [x] `src/tools/search_tools.ts` — `glob_files`, `grep_files`
 - [x] `src/tools/shell_tools.ts` — `run_shell_command`, with a timeout and an output cap
 - [x] `src/tools/tool_registry.ts` — assembles and filters the tool list
-- [x] `src/cli/permission_prompt.ts` — refuses by default when there is no terminal → verification step `toolCallRead`, `permissionRefused`, `permissionAllowed`
+- [x] `src/terminal/permission_prompt.ts` — refuses by default when there is no terminal → verification step `toolCallRead`, `permissionRefused`, `permissionAllowed`
 
 ## Milestone 3 — the `.doublure` folder
 
@@ -78,8 +78,8 @@ The goal is the smallest thing that proves the whole chain works: command line t
 
 ## Milestone 6 — the interactive command line interface
 
-- [ ] `src/cli/conversation_session.ts`, `output_renderer.ts`, `readline_interface.ts` — **written, but no verification step exercises it.** Driving the interactive loop needs a pseudo terminal, because `_runInteractive` refuses when the input is not a terminal.
-- [ ] `src/cli/slash_command_handler.ts` — `/help` and `/exit` first, then `/clear`, `/agents`, `/skills`, `/memory` — **written, but only the file commands are verified, through `--expand`.** No step types `/help` or `/exit` at a terminal.
+- [ ] `src/terminal/conversation_session.ts`, `output_renderer.ts`, `readline_interface.ts` — **written, but no verification step exercises it.** Driving the interactive loop needs a pseudo terminal, because `_runInteractive` refuses when the input is not a terminal.
+- [ ] `src/terminal/slash_command_handler.ts` — `/help` and `/exit` first, then `/clear`, `/agents`, `/skills`, `/memory` — **written, but only the file commands are verified, through `--expand`.** No step types `/help` or `/exit` at a terminal.
 - [x] The `--expand` option, printing an expanded slash command without calling the model → verification step `commandExpanded`
 - [ ] Quitting on the interrupt key pressed twice and on the input stream closing, both saving the session first. Moved here from Milestone 5: a second press of the interrupt key only means anything once there is a loop to interrupt. The one-shot mode already handles a single press, and the conversation is written to disk before the model is called, so nothing is lost whenever doublure is stopped. — **written, but not verified.** Needs the same pseudo terminal as the loop itself.
 
