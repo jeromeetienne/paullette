@@ -5,8 +5,11 @@ import { Command } from 'commander';
 import { AgentBuilder } from './libs/agent/agent_builder.ts';
 import { ModelProvider } from './libs/agent/model_provider.ts';
 import { SystemPromptBuilder } from './libs/agent/system_prompt_builder.ts';
+import { PermissionPrompt } from './libs/cli/permission_prompt.ts';
 import { ConfigLoader } from './libs/config/config_loader.ts';
 import { type DoublureConfig } from './libs/config/config_types.ts';
+import { ToolRegistry } from './libs/tools/tool_registry.ts';
+import { type ToolContext } from './libs/tools/tool_types.ts';
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -120,10 +123,21 @@ class Main {
 			memoryIndexText: null,
 		});
 
+		const permissionPrompt = new PermissionPrompt(config.isPermissionPromptEnabled);
+		const toolContext: ToolContext = {
+			workingDirectoryPath: config.workingDirectoryPath,
+			permissionAsker: permissionPrompt,
+			logToolCall: (toolName, summary) => {
+				if (config.isToolCallLoggingEnabled === true) {
+					process.stderr.write(`doublure-tool: ${toolName} ${summary}\n`);
+				}
+			},
+		};
+
 		const agent = AgentBuilder.build({
 			modelName: config.modelName,
 			systemPrompt: systemPrompt,
-			tools: [],
+			tools: ToolRegistry.createAll(toolContext),
 		});
 
 		Main._reportCapabilities(agent);

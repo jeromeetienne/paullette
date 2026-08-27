@@ -50,12 +50,12 @@ The goal is the smallest thing that proves the whole chain works: command line t
 
 ## Milestone 2 — the tools and the permission prompt
 
-- [ ] `src/libs/tools/tool_types.ts` — `ToolContext` and the `PermissionAsker` interface
-- [ ] `src/libs/tools/file_tools.ts` — `read_file`, `write_file`, `edit_file`, `list_directory`
-- [ ] `src/libs/tools/search_tools.ts` — `glob_files`, `grep_files`
-- [ ] `src/libs/tools/shell_tools.ts` — `run_shell_command`, with a timeout and an output cap
-- [ ] `src/libs/tools/tool_registry.ts` — assembles and filters the tool list
-- [ ] `src/libs/cli/permission_prompt.ts` — refuses by default when there is no terminal → verification step `toolCallRead`, `permissionRefused`, `permissionAllowed`
+- [x] `src/libs/tools/tool_types.ts` — `ToolContext` and the `PermissionAsker` interface
+- [x] `src/libs/tools/file_tools.ts` — `read_file`, `write_file`, `edit_file`, `list_directory`
+- [x] `src/libs/tools/search_tools.ts` — `glob_files`, `grep_files`
+- [x] `src/libs/tools/shell_tools.ts` — `run_shell_command`, with a timeout and an output cap
+- [x] `src/libs/tools/tool_registry.ts` — assembles and filters the tool list
+- [x] `src/libs/cli/permission_prompt.ts` — refuses by default when there is no terminal → verification step `toolCallRead`, `permissionRefused`, `permissionAllowed`
 
 ## Milestone 3 — the `.doublure` folder
 
