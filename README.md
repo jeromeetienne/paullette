@@ -114,8 +114,52 @@ The agent can call these:
 - `memory_list`, `memory_read`, `memory_write`, `memory_delete`
 - `load_skill`
 - one tool per subagent found in `.paullette/agents`
+- one tool per tool of every Model Context Protocol server you declared
 
-Every tool that takes a path refuses a path outside the working folder. Every tool that changes a file or runs a shell command asks you first, unless you passed `--yes`. Every tool result is capped in size, so one large file cannot fill the context window of a small local model.
+Every tool that takes a path refuses a path outside the working folder. Every tool that changes a file, runs a shell command, or reaches a Model Context Protocol server asks you first, unless you passed `--yes`. Every tool result is capped in size, so one large file cannot fill the context window of a small local model.
+
+## Model Context Protocol servers
+
+A Model Context Protocol server adds tools to the agent without changing the code of paullette. Declare a server in any of these three files, and paullette starts it, lists its tools, and offers them to the model:
+
+- `.mcp.json` at the root of the project
+- the `mcpServers` field of `.paullette/settings.json`, the settings file of the project
+- the `mcpServers` field of `~/.paullette/settings.json`, the settings file of your user account
+
+They are read in that order from the weakest to the strongest, so the settings file of the project wins over `.mcp.json`, and `.mcp.json` wins over the settings file of your user account. The file names and the field names are the ones Claude Code uses, so a project that is already set up for Claude Code needs no new file.
+
+A server that paullette starts itself names a `command`, and may name `args`, `env`, and `cwd`:
+
+```json
+{
+	"mcpServers": {
+		"now": {
+			"command": "npx",
+			"args": ["-y", "mcp-now"]
+		}
+	}
+}
+```
+
+A server paullette reaches over the network names a `url`, and may name `headers` and a `type` of either `http` or `sse`:
+
+```json
+{
+	"mcpServers": {
+		"remote": {
+			"type": "http",
+			"url": "https://example.com/model-context-protocol",
+			"headers": { "Authorization": "Bearer YOUR_TOKEN" }
+		}
+	}
+}
+```
+
+The name of every tool starts with the name of the server it came from, so the `get_current_date` tool of the `now` server reaches the model as `now_get_current_date`, and two servers that expose the same tool name do not collide. Every call asks you first, exactly like a shell command does.
+
+A server that fails to start prints one line beginning with `paullette-warning:` and paullette carries on with the servers that did start. Every server is stopped when paullette exits.
+
+paullette reads the tools of a Model Context Protocol server. It does not yet read the resources or the prompts of one, and it has no command to add, to remove, or to list a server: write the file by hand.
 
 ## Memory
 

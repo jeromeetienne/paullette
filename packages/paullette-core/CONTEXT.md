@@ -9,6 +9,7 @@ The package named `paullette-core`. It holds everything paullette does that is n
 - `src/config_runtime/`: reads the configuration given on the command line and in the environment — see its own CONTEXT.md.
 - `src/history/`: keeps the conversation and the lines the user typed — see its own CONTEXT.md.
 - `src/memory/`: reads and writes `.paullette/memory` — see its own CONTEXT.md.
+- `src/model_context_protocol/`: reads, starts, and stops the Model Context Protocol servers, and turns their tools into tools of the agent — see its own CONTEXT.md.
 - `src/tools/`: every tool the agent can call — see its own CONTEXT.md.
 - `test/unit/` and `test/libs/`: the unit test suite of this package and what it shares — see their own CONTEXT.md.
 - Every file under `src/` is reachable from another package as `paullette-core/<folder>/<file name>`, without the `.ts` extension. There is no barrel file.

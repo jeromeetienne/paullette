@@ -90,6 +90,19 @@ The goal is the smallest thing that proves the whole chain works: command line t
 - [ ] `README.md` rewritten: what paullette is, how to point it at an endpoint, what goes in `.paullette`
 - [ ] Every box above ticked and `npm run verify` green
 
+## Milestone 8 — the Model Context Protocol servers
+
+The plan is [issue #7](https://github.com/jeromeetienne/paullette/issues/7).
+
+- [x] `src/model_context_protocol/model_context_protocol_types.ts` — the Zod schema of a server entry, for both transports
+- [x] `src/model_context_protocol/model_context_protocol_config_reader.ts` — reads and merges `.mcp.json`, the settings file of the project, and the settings file of the user
+- [x] `src/model_context_protocol/model_context_protocol_server_launcher.ts` — starts every server, warns about the ones that fail, and stops them all on the way out
+- [x] `src/model_context_protocol/model_context_protocol_tools.ts` — one tool of the agent per tool of a server, named after its server and asking the user before every call
+- [x] `src/model_context_protocol/model_context_protocol_session.ts` — the one thing `cli.ts` starts and closes
+- [ ] A verification step that declares a real server and proves the model calls one of its tools — **not written.** The whole milestone was proved live against `npx -y mcp-now` instead, and by the two unit test files.
+
+Not built, and out of scope of issue #7: the resources and the prompts of a server, and a command to add, to remove, or to list a server.
+
 ## What is verified and what is not
 
 There are two suites, and they cover different failures.
