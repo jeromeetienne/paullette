@@ -20,6 +20,7 @@
 		"lmstudio:status": "lms server status",
 		"lmstudio:start": "lms server start",
 		"lmstudio:stop": "lms server stop",
+		"lmstudio:logs": "lms logs stream",
 		"clean": "rm -rf packages/paullette-core/dist packages/paullette-web/dist packages/paullette-cli/dist",
 		"prepublishOnly": "npm run clean && npm run build"
 	},
