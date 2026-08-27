@@ -12,7 +12,8 @@
 		"typecheck": "tsc --noEmit",
 		"verify": "tsx ./test/run_verification.ts",
 		"verify:fast": "tsx ./test/run_verification.ts --fast",
-		"test": "tsx ./test/run_verification.ts",
+		"test:unit": "node --import tsx --test \"test/unit/**/*_test.ts\"",
+		"test": "npm run test:unit && npm run verify",
 		"lmstudio:status": "lms server status",
 		"lmstudio:start": "lms server start",
 		"lmstudio:stop": "lms server stop"

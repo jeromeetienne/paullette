@@ -92,13 +92,17 @@ The goal is the smallest thing that proves the whole chain works: command line t
 
 ## What is verified and what is not
 
+There are two suites, and they cover different failures.
+
+`npm run test:unit` is the unit test suite under `test/unit`. It calls the code in `src/` directly, never calls a model, and runs in seconds. It covers the pieces one at a time at their edges: a path that climbs out of the working folder, frontmatter that is not valid YAML, a permission that was refused, a memory index that has to be rewritten. It cannot say whether the whole chain works, because nothing in it starts code-agent or calls a model.
+
 `npm run verify` exits zero: all fourteen steps pass. That covers the one-shot mode end to end — the `.code-agent` folder, the tools, the permission prompt, the memory, the subagents, the skills, the slash command expansion, and the conversation history.
 
 It does not cover the interactive loop. Nothing types at a terminal, so `/help`, `/exit`, the interrupt key, and the answer streaming out turn by turn are written but unchecked. Verifying them needs a pseudo terminal, because `_runInteractive` refuses to start when the input is not a terminal. Until that exists, treat the interactive loop as unproven however green the scoreboard looks.
 
 ## Stop condition
 
-Stop when `npm run typecheck` is clean, `npm run verify` exits zero with every step PASS, and every box in this file is ticked. Nothing else counts as done.
+Stop when `npm run typecheck` is clean, `npm run test:unit` passes, `npm run verify` exits zero with every step PASS, and every box in this file is ticked. `npm test` runs the last two in that order. Nothing else counts as done.
 
 ## Notes
 

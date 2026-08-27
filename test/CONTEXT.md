@@ -1,16 +1,17 @@
 # Directory Context: `/test`
 
 ## Purpose
-Holds the verification runner, which is the single command that answers whether code-agent is done. Each check here carries out one numbered step of the verification section of the plan in [issue #1](https://github.com/jeromeetienne/code-agent/issues/1).
+Holds the two halves of the testing: the verification runner, which is the single command that answers whether code-agent is done, and the unit test suite in `unit/`, which calls the code in `src/` directly. Each check in the verification runner carries out one numbered step of the verification section of the plan in [issue #1](https://github.com/jeromeetienne/code-agent/issues/1).
 
 ## Key Exports & Entry Points
 - `run_verification.ts`: the runner. It prints one scoreboard and exits with a status that says what happened.
 - `libs/`: the checks themselves, the helper that starts code-agent, and the endpoint probe — see its own CONTEXT.md.
 - `fixture/`: the folder every check starts from. It is copied to a temporary folder before each check, never used in place. It holds a `.code-agent` folder with one instruction document, one subagent, one slash command, and one skill.
-- Command to run this folder: `npm run verify`, or `npm run verify:fast` to skip every check that calls the model.
+- `unit/`: the unit test suite, one test file per source file, calling the code in `src/` directly and never calling a model — see its own CONTEXT.md.
+- Command to run this folder: `npm test`, which runs `npm run test:unit` and then `npm run verify`. `npm run test:unit` runs only the unit test suite, and `npm run verify:fast` runs only the checks that do not call the model.
 
 ## Rules
-- Nothing here imports from `src/`. A check starts code-agent as a separate process and looks only at what code-agent printed and at the files it left behind, so that a check cannot pass by reaching inside code that a real user never reaches.
+- Nothing in `run_verification.ts` or in `libs/` imports from `src/`. A check starts code-agent as a separate process and looks only at what code-agent printed and at the files it left behind, so that a check cannot pass by reaching inside code that a real user never reaches. `unit/` is the opposite by design: it imports from `src/` and nothing else, and it is the only folder here that does.
 - A check never writes into the repository. It writes into a temporary folder made by `CodeAgentRunner`, and `removeFolder` refuses any path that class did not make.
 - The three outcomes mean three different things and must not be blurred. `passed` means something was really seen. `failed` means code that exists is wrong. `pending` means the part of code-agent being checked has not been written yet.
 - The exit status follows the same three meanings: zero when every check passed, one when any check failed, two when nothing failed but work remains.
