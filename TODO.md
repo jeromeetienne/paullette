@@ -78,10 +78,10 @@ The goal is the smallest thing that proves the whole chain works: command line t
 
 ## Milestone 6 — the interactive command line interface
 
-- [ ] `src/libs/cli/conversation_session.ts`, `output_renderer.ts`, `readline_interface.ts`
-- [ ] `src/libs/cli/slash_command_handler.ts` — `/help` and `/exit` first, then `/clear`, `/agents`, `/skills`, `/memory`
-- [ ] The `--expand` option, printing an expanded slash command without calling the model → verification step `commandExpanded`
-- [ ] Quitting on the interrupt key pressed twice and on the input stream closing, both saving the session first. Moved here from Milestone 5: a second press of the interrupt key only means anything once there is a loop to interrupt. The one-shot mode already handles a single press, and the conversation is written to disk before the model is called, so nothing is lost whenever doublure is stopped.
+- [ ] `src/libs/cli/conversation_session.ts`, `output_renderer.ts`, `readline_interface.ts` — **written, but no verification step exercises it.** Driving the interactive loop needs a pseudo terminal, because `_runInteractive` refuses when the input is not a terminal.
+- [ ] `src/libs/cli/slash_command_handler.ts` — `/help` and `/exit` first, then `/clear`, `/agents`, `/skills`, `/memory` — **written, but only the file commands are verified, through `--expand`.** No step types `/help` or `/exit` at a terminal.
+- [x] The `--expand` option, printing an expanded slash command without calling the model → verification step `commandExpanded`
+- [ ] Quitting on the interrupt key pressed twice and on the input stream closing, both saving the session first. Moved here from Milestone 5: a second press of the interrupt key only means anything once there is a loop to interrupt. The one-shot mode already handles a single press, and the conversation is written to disk before the model is called, so nothing is lost whenever doublure is stopped. — **written, but not verified.** Needs the same pseudo terminal as the loop itself.
 
 ## Milestone 7 — the finish
 
@@ -89,6 +89,12 @@ The goal is the smallest thing that proves the whole chain works: command line t
 - [ ] A `CLAUDE.md` at the repository root
 - [ ] `README.md` rewritten: what doublure is, how to point it at an endpoint, what goes in `.doublure`
 - [ ] Every box above ticked and `npm run verify` green
+
+## What is verified and what is not
+
+`npm run verify` exits zero: all fourteen steps pass. That covers the one-shot mode end to end — the `.doublure` folder, the tools, the permission prompt, the memory, the subagents, the skills, the slash command expansion, and the conversation history.
+
+It does not cover the interactive loop. Nothing types at a terminal, so `/help`, `/exit`, the interrupt key, and the answer streaming out turn by turn are written but unchecked. Verifying them needs a pseudo terminal, because `_runInteractive` refuses to start when the input is not a terminal. Until that exists, treat the interactive loop as unproven however green the scoreboard looks.
 
 ## Stop condition
 

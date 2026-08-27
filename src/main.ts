@@ -1,19 +1,23 @@
 #!/usr/bin/env -S npx tsx
 import Path from 'node:path';
 
-import { run, user } from '@openai/agents';
+import { type Agent } from '@openai/agents';
 import { Command } from 'commander';
 
 import { AgentBuilder } from './libs/agent/agent_builder.ts';
 import { ModelProvider } from './libs/agent/model_provider.ts';
 import { SystemPromptBuilder } from './libs/agent/system_prompt_builder.ts';
+import { ConversationSession } from './libs/cli/conversation_session.ts';
+import { OutputRenderer } from './libs/cli/output_renderer.ts';
 import { PermissionPrompt } from './libs/cli/permission_prompt.ts';
+import { ReadlineInterface } from './libs/cli/readline_interface.ts';
+import { SlashCommandHandler } from './libs/cli/slash_command_handler.ts';
 import { ConfigLoader } from './libs/config/config_loader.ts';
 import { type DoublureConfig } from './libs/config/config_types.ts';
 import { DoublureFolderReader } from './libs/doublure_folder/doublure_folder_reader.ts';
 import { type DoublureFolderContent } from './libs/doublure_folder/doublure_folder_types.ts';
+import { InputHistoryStore } from './libs/history/input_history_store.ts';
 import { SessionStore } from './libs/history/session_store.ts';
-import { type StoredSession } from './libs/history/history_types.ts';
 import { MemoryStore } from './libs/memory/memory_store.ts';
 import { MemoryTools } from './libs/tools/memory_tools.ts';
 import { SkillTools } from './libs/tools/skill_tools.ts';
@@ -35,6 +39,8 @@ type CommandLineOptions = {
 	print?: string;
 	/** True to print what was read out of the `.doublure` folder as JSON and exit. */
 	list?: boolean;
+	/** The slash command to expand and print without calling the model, for example `/greet World`. */
+	expand?: string;
 	/** True to carry on the newest conversation instead of starting a new one. */
 	resume?: boolean;
 	/** True to approve every permission request instead of asking. */
@@ -59,14 +65,20 @@ type StartedSession = {
 	content: DoublureFolderContent;
 	/** The working folder, the permission asker, and the tool call logger. */
 	toolContext: ToolContext;
-	/** Every tool the main agent may call, including the skills and the subagents. */
+	/** Asks the user before a tool changes anything. */
+	permissionPrompt: PermissionPrompt;
+	/** Every tool the main agent may call, including the memory, the skills, and the subagents. */
 	tools: BuiltTool[];
+	/** The agent that answers. */
+	agent: Agent;
 	/** The store holding everything remembered about this project. */
 	memoryStore: MemoryStore;
-	/** The store the conversation is written to. */
-	sessionStore: SessionStore;
 	/** The conversation being held, either newly started or read back from disk. */
-	storedSession: StoredSession;
+	conversationSession: ConversationSession;
+	/** Deals with a typed line that starts with a slash. */
+	slashCommandHandler: SlashCommandHandler;
+	/** Remembers the typed lines between runs. */
+	inputHistoryStore: InputHistoryStore;
 };
 
 /**
@@ -86,6 +98,7 @@ class Main {
 			.description('A coding agent that reads a .doublure folder and runs on any OpenAI API compatible endpoint')
 			.option('--print <prompt>', 'answer one prompt and exit, printing the answer to the standard output')
 			.option('--list', 'print what was read out of the .doublure folder as JSON, and exit')
+			.option('--expand <command>', 'print the expanded text of a slash command without calling the model')
 			.option('--resume', 'carry on the newest conversation in .doublure/sessions instead of starting a new one')
 			.option('--yes', 'approve every permission request instead of asking')
 			.option('--model <name>', 'the identifier of the model to use')
@@ -106,13 +119,17 @@ class Main {
 			return;
 		}
 
+		if (options.expand !== undefined) {
+			await Main._printExpandedCommand(session, options.expand);
+			return;
+		}
+
 		if (options.print !== undefined) {
 			await Main._runOneShot(session, options.print);
 			return;
 		}
 
-		process.stderr.write('The interactive mode is not built yet. Use --print "<your question>" for now.\n');
-		process.exitCode = 1;
+		await Main._runInteractive(session);
 	}
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -122,7 +139,7 @@ class Main {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Builds the configuration, reads the `.doublure` folder, and assembles the tools.
+	 * Builds the configuration, reads the `.doublure` folder, and assembles everything the modes share.
 	 *
 	 * @param options What was given on the command line.
 	 * @returns Everything the chosen mode needs.
@@ -152,10 +169,12 @@ class Main {
 		};
 
 		const memoryStore = new MemoryStore(Path.join(content.paths.doublureFolderPath, 'memory'));
-		const sessionStore = new SessionStore(Path.join(content.paths.doublureFolderPath, 'sessions'));
+		const sessionsFolderPath = Path.join(content.paths.doublureFolderPath, 'sessions');
+		const sessionStore = new SessionStore(sessionsFolderPath);
 
 		const resumedSession = options.resume === true ? sessionStore.loadNewestSession() : null;
 		const storedSession = resumedSession ?? sessionStore.startSession(config.modelName);
+		const conversationSession = new ConversationSession(sessionStore, sessionsFolderPath, storedSession);
 
 		const ordinaryTools = ToolRegistry.createAll(toolContext);
 		const tools = [
@@ -169,14 +188,37 @@ class Main {
 			}),
 		];
 
+		const agent = AgentBuilder.build({
+			modelName: config.modelName,
+			systemPrompt: SystemPromptBuilder.build({
+				workingDirectoryPath: config.workingDirectoryPath,
+				instructionDocument: content.instructionDocument,
+				skillDefinitions: content.skillDefinitions,
+				memoryIndexText: memoryStore.readIndex(),
+				isMemoryAvailable: true,
+			}),
+			tools: tools,
+		});
+
 		return {
 			config: config,
 			content: content,
 			toolContext: toolContext,
+			permissionPrompt: permissionPrompt,
 			tools: tools,
+			agent: agent,
 			memoryStore: memoryStore,
-			sessionStore: sessionStore,
-			storedSession: storedSession,
+			conversationSession: conversationSession,
+			slashCommandHandler: new SlashCommandHandler(
+				content,
+				toolContext,
+				memoryStore,
+				conversationSession,
+				config.modelName,
+			),
+			inputHistoryStore: new InputHistoryStore(
+				Path.join(content.paths.doublureFolderPath, 'input_history.txt'),
+			),
 		};
 	}
 
@@ -228,6 +270,31 @@ class Main {
 	}
 
 	/**
+	 * Expands one slash command and prints the result, without calling the model.
+	 *
+	 * @param session Everything built at startup.
+	 * @param commandLine The slash command as the user would type it, for example `/greet World`.
+	 * @returns Nothing.
+	 */
+	private static async _printExpandedCommand(session: StartedSession, commandLine: string): Promise<void> {
+		const outcome = await session.slashCommandHandler.handle(commandLine);
+
+		if (outcome.kind === 'prompt') {
+			process.stdout.write(`${outcome.text}\n`);
+			return;
+		}
+
+		if (outcome.kind === 'notACommand') {
+			process.stderr.write(`${commandLine} is not a slash command. A slash command starts with a slash.\n`);
+			process.exitCode = 1;
+			return;
+		}
+
+		process.stderr.write('That command is answered by doublure itself, so it expands to nothing.\n');
+		process.exitCode = 1;
+	}
+
+	/**
 	 * Answers one prompt and returns.
 	 *
 	 * The answer goes to the standard output and nothing else does, so that a caller reading the standard output
@@ -238,41 +305,47 @@ class Main {
 	 * @returns Nothing.
 	 */
 	private static async _runOneShot(session: StartedSession, prompt: string): Promise<void> {
-		const systemPrompt = SystemPromptBuilder.build({
-			workingDirectoryPath: session.config.workingDirectoryPath,
-			instructionDocument: session.content.instructionDocument,
-			skillDefinitions: session.content.skillDefinitions,
-			memoryIndexText: session.memoryStore.readIndex(),
-			isMemoryAvailable: true,
-		});
-
-		const agent = AgentBuilder.build({
-			modelName: session.config.modelName,
-			systemPrompt: systemPrompt,
-			tools: session.tools,
-		});
-
-		const inputItems = [...session.storedSession.history, user(prompt)];
-		session.sessionStore.save(session.storedSession, inputItems);
-
 		try {
-			const result = await run(agent, inputItems, {
-				stream: true,
-				maxTurns: session.config.maximumTurnCount,
-			});
-
-			for await (const textChunk of result.toTextStream()) {
-				process.stdout.write(textChunk);
-			}
-			await result.completed;
+			await session.conversationSession.runTurn(
+				session.agent,
+				prompt,
+				session.config.maximumTurnCount,
+				(textChunk) => process.stdout.write(textChunk),
+			);
 			process.stdout.write('\n');
-
-			session.sessionStore.save(session.storedSession, result.history);
 		} catch (caughtError) {
 			const reason = caughtError instanceof Error ? caughtError.message : String(caughtError);
 			process.stderr.write(`doublure could not answer: ${reason}\n`);
 			process.exitCode = 1;
 		}
+	}
+
+	/**
+	 * Runs the read, answer, and repeat loop at the terminal.
+	 *
+	 * @param session Everything built at startup.
+	 * @returns Nothing.
+	 */
+	private static async _runInteractive(session: StartedSession): Promise<void> {
+		if (process.stdin.isTTY !== true) {
+			process.stderr.write(
+				'There is no terminal to read from. Use --print "<your question>" to ask one question.\n',
+			);
+			process.exitCode = 1;
+			return;
+		}
+
+		const readlineInterface = new ReadlineInterface({
+			config: session.config,
+			agent: session.agent,
+			conversationSession: session.conversationSession,
+			slashCommandHandler: session.slashCommandHandler,
+			permissionPrompt: session.permissionPrompt,
+			inputHistoryStore: session.inputHistoryStore,
+			projectRootPath: session.content.paths.projectRootPath,
+		});
+
+		await readlineInterface.run();
 	}
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -282,23 +355,20 @@ class Main {
 	///////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * Makes the interrupt key end doublure without losing the conversation.
+	 * Makes the interrupt key end doublure without losing the conversation, when there is no interactive loop to
+	 * handle it. The interactive loop handles its own, so that a first press can warn and a second can leave.
 	 *
 	 * Nothing has to be written here, because the conversation is written to disk before the model is called
-	 * rather than only after it answers. That is the whole point of saving at the start of a turn: whenever
-	 * doublure is stopped, the file on disk already holds everything said up to that moment.
+	 * rather than only after it answers.
 	 *
 	 * @param session Everything built at startup.
 	 * @returns Nothing.
 	 */
 	private static _installInterruptHandler(session: StartedSession): void {
 		process.on('SIGINT', () => {
-			const filePath = Path.join(
-				session.content.paths.doublureFolderPath,
-				'sessions',
-				`${session.storedSession.identifier}.json`,
+			OutputRenderer.writeNotice(
+				`\ndoublure stopped. The conversation so far is in ${session.conversationSession.sessionFilePath}`,
 			);
-			process.stderr.write(`\ndoublure stopped. The conversation so far is in ${filePath}\n`);
 			process.exit(130);
 		});
 	}
